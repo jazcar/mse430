@@ -10,4 +10,5 @@
 	<rts value="libc.a"/>
 	<createSlaveProjects value=""/>
 	<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate_msp430,"/>
+	<origin value="//vmware-host/Shared Folders/Documents/GitHub/mse430/robot"/>
 </projectOptions>
