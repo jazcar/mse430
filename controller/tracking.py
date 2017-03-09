@@ -1,4 +1,5 @@
 import cv2
+import time
 import numpy as np
 from itertools import combinations
 from operator import itemgetter
@@ -8,6 +9,8 @@ def main():
     frame = cv2.imread('test-images/led.png')
     flash = cv2.imread('test-images/bot.png')
     
+    start = time.perf_counter()
+
     diff = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.int32)
     gray = cv2.cvtColor(flash, cv2.COLOR_BGR2GRAY)
 
@@ -53,6 +56,9 @@ def main():
                 except ValueError:
                     break
 
+    finish = time.perf_counter()
+    print('Time elapsed:', finish-start)
+    
     for who in whosit:
         print(who.center)
         cv2.circle(frame, tuple(who.center.astype('int32')),

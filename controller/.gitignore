@@ -98,3 +98,5 @@ ENV/
 # End of https://www.gitignore.io/api/pycharm,python
 .\#*
 
+*.nb
+/test-images/
