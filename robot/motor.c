@@ -25,27 +25,15 @@ volatile int motor_b_rate;
 
 int motor_init() {
 
-	// Check motor pins  TODO: is this necessary?
-	if (P2SEL & ALL_MOTOR_IN)
-		return 1;
-	if (P2SEL2 & ALL_MOTOR_IN)
-		return 1;
-	if (ALL_MOTOR_IN ^ (P2DIR & ALL_MOTOR_IN))
-		return 1;
+	// Init pins
+	P1SEL &= ~ENCODER_A;
+	P1SEL2 &= ~ENCODER_A;
+	P1DIR &= ~ENCODER_A;
 
-	// Check encoder pins
-	if (P1SEL & ENCODER_A)
-		return 1;
-	if (P1SEL2 & ENCODER_A)
-		return 1;
-	if (P1DIR & ENCODER_A)
-		return 1;
-	if (P2SEL & ENCODER_B)
-		return 1;
-	if (P2SEL2 & ENCODER_B)
-		return 1;
-	if (P2DIR & ENCODER_B)
-		return 1;
+	P2SEL &= ~(ALL_MOTOR_IN | ENCODER_B);
+	P2SEL2 &= ~(ALL_MOTOR_IN | ENCODER_B);
+	P2DIR |= ALL_MOTOR_IN;
+	P2DIR &= ~ENCODER_B;
 
 	// Set up TimerA0 -- SMCLK is configured to DCO by default)
 	TA1CTL = TASSEL_2 | MC_1;		// Stopped to begin with
@@ -65,7 +53,6 @@ int motor_init() {
 	P2IE |= ENCODER_B;
 
 	// Add verification to check if encoders are plugged in right?
-
 	return 0;
 }
 
@@ -120,8 +107,9 @@ void set_motor_b_power(int power) {
 }
 
 // PID Controller interrupt
-#pragma vector=TIMER0_A0_VECTOR
-__interrupt void speedometer() {
+// #pragma vector=TIMER0_A0_VECTOR
+// __interrupt void speedometer() {
+void speedometer() {
 	static signed long old_a_count = 0;
 	static signed long old_b_count = 0;
 

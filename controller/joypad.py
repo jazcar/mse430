@@ -9,7 +9,7 @@ from kivy.uix.widget import Widget
 from collections import namedtuple
 from math import sqrt, atan2
 
-from kivy_remote import Remote
+from remote import Remote
 
 Point = namedtuple('Point', 'x y')
 

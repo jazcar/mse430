@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
-import bluetooth as bt
+#import bluetooth as bt
 from struct import pack
+from platform import system
+from glob import glob
 
 
 class Remote:

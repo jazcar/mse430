@@ -8,15 +8,23 @@
 #include "uart.h"
 #include <msp430.h>
 #include "pins.h"
-#include "IObuffer.h"
 
-IObuffer* uart_rx_buf, uart_tx_buf;
+IObuffer* uart_rx_buf;
+IObuffer* uart_tx_buf;
+
+void uart_rx_callback();
+void uart_tx_callback();
 
 int uart_init() {
 
 	// Create IObuffers (probably quite oversized)
-	uart_rx_buf = IObuffer_create(64);
-	uart_tx_buf = IObuffer_create(64);
+	uart_rx_buf = IObuffer_create(32);
+	uart_tx_buf = IObuffer_create(32);
+
+	uart_rx_buf->bytes_ready = uart_rx_callback;
+	uart_rx_buf->callback_once = 0;
+	uart_tx_buf->bytes_ready = uart_tx_callback;
+	uart_tx_buf->callback_once = 1;
 
 	// Set up USCIA0
 	UCA0CTL0 = 0x00;				// UART Mode, defaults
@@ -32,6 +40,9 @@ int uart_init() {
 	UCA0MCTL = UCBRS_6;
 #endif
 
+	P1SEL |= UART_RX | UART_TX;
+	P1SEL2 |= UART_RX | UART_TX;
+
 	UCA0CTL1 &= ~UCSWRST;			// Start USCIA0
 	IE2 |= UCA0RXIE;                // Enable RX interrupt
 	return 0;
@@ -42,23 +53,5 @@ void uart_tx_callback() {
 }
 
 void uart_rx_callback() {
-	sys_event |= BIT(CMD_EVENT);	// Signal command event
-}
-
-#pragma vector = USCIAB0TX_VECTOR
-__interrupt void USCI_TX_ISR() {
-	if (IFG2 & UCA0TXIFG) {
-		if (uart_tx_buf->count > 0) {			// If byte is available
-			IOgetc(&UCA0TXBUF, uart_rx_buf);	// Load next byte
-		} else {								// Otherwise
-			IE2 &= ~UCA0TXIE;					// Shut off interrupt
-		}
-	}
-}
-
-#pragma vector = USCIAB0RX_VECTOR
-__interrupt void USCI_RX_ISR() {
-	if (IFG2 & UCA0RXIFG) {
-		IOputc(UCA0RXBUF, uart_rx_buf);			// Copy into buffer
-	}
+	// sys_event |= BIT(CMD_EVENT);	// Signal command event
 }

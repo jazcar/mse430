@@ -58,7 +58,7 @@ int IOnputs(const char* src, int n, IObuffer* iob)
 	char* write_ptr;		// pointer to which to copy
 
 	short sr = __get_SR_register();
-	__disable_interrupt();
+	__disable_interrupt();	// FIXME this is failing sometimes...
 	// Return error if buffer is null or inactive
 	if (!iob || !iob->size)
 		return -1; // error

@@ -8,10 +8,13 @@
 #ifndef UART_H_
 #define UART_H_
 
+#include "IObuffer.h"
+
 // Public function prototypes
 int uart_init();
-int uart_getchar();
-int uart_putchar(char c);
 
+// IObuffers
+extern IObuffer* uart_rx_buf;
+extern IObuffer* uart_tx_buf;
 
 #endif /* UART_H_ */
