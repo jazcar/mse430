@@ -93,10 +93,10 @@ ENV/
 .ropeproject
 
 # PyCharm IDE files
-/.idea
+/.idea/
 
 # End of https://www.gitignore.io/api/pycharm,python
 .\#*
-
 *.nb
 /test-images/
+
