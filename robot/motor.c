@@ -25,7 +25,7 @@ volatile int motor_b_rate;
 
 int motor_init() {
 
-	// Check motor pins
+	// Check motor pins  TODO: is this necessary?
 	if (P2SEL & ALL_MOTOR_IN)
 		return 1;
 	if (P2SEL2 & ALL_MOTOR_IN)

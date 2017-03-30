@@ -9,10 +9,10 @@
 #define PINS_H_
 
 // Port 1
-// 		NC				BIT0	// NC
+#define RED_LEDS		BIT0	// Drive low to light LEDs on top
 #define UART_RX			BIT1	// RX to BT TX
 #define UART_TX			BIT2	// TX to BT RX
-//		NC				BIT3	// NC
+#define BUTTON_1		BIT3	// Button (not reset)
 #define MOTOR_A_HALL_B	BIT4	// Motor A encoder output B
 #define MOTOR_A_HALL_A	BIT5	// Motor A encoder output A
 #define I2C_SCL			BIT6	// UCB0SCL to Accelerometer SCL
@@ -25,7 +25,7 @@
 #define MOTOR_B_HALL_B	BIT3	// Motor B encoder output B
 #define MOTOR_B_IN_2	BIT4	// Motor B H-bridge input 2
 #define MOTOR_B_IN_1	BIT5	// Motor B H-bridge input 1
-//		NC				BIT6	// NC
-//		NC				BIT7	// NC
+#define XIN         	BIT6	// 32.768 kHz crystal
+#define XOUT			BIT7	// 32.768 kHz crystal
 
 #endif /* PINS_H_ */

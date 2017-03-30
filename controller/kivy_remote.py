@@ -11,7 +11,7 @@ class Remote:
     def __init__(self, app=None):
         self.app = app
         if system() == 'Darwin':
-            dev_files = glob('/dev/tty.HC-06*')
+            dev_files = glob('/dev/tty.MSE430-0*')  # FIXME
             if len(dev_files) is 1:
                 print('Opening port to robot at', dev_files[0], end='')
                 self.robot = open(dev_files[0], 'w+b')
@@ -21,7 +21,7 @@ class Remote:
                       file=stderr)
                 exit(len(dev_files))
             else:
-                print('Could not find a usbmodem file for the lights.')
+                print('Could not find a robot.')
                 exit(1)
         # elif system() == 'Linux':
         #     print('Opening port to robot at /dev/tty????', end='')
