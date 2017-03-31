@@ -87,7 +87,7 @@ int IOnputs(const char* src, int n, IObuffer* iob)
 	while (n-- > 0)
 		*write_ptr++ = *src++;
 
-	if (!iob->count && iob->bytes_ready)
+	if (!(iob->count++ && iob->callback_once) && iob->bytes_ready)
 		iob->bytes_ready();
 	iob->count = new_count;
 

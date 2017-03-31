@@ -33,6 +33,7 @@ int IOgetc(char*, IObuffer*);
 
 // Auxiliary functions
 IObuffer* IObuffer_create(int size);
+void IObuffer_init(IObuffer*, char*, int, void (*cb)(void));
 void IObuffer_destroy(IObuffer* iob);
 
 #endif /* IOBUFFER_H_ */

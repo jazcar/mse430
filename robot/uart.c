@@ -9,8 +9,13 @@
 #include <msp430.h>
 #include "pins.h"
 
-IObuffer* uart_rx_buf;
-IObuffer* uart_tx_buf;
+IObuffer _uart_rx_buf;
+IObuffer _uart_tx_buf;
+IObuffer* const uart_rx_buf = &_uart_rx_buf;
+IObuffer* const uart_tx_buf = &_uart_tx_buf;
+#define UART_BUF_SIZE  32
+char uart_rx_chars[UART_BUF_SIZE];
+char uart_tx_chars[UART_BUF_SIZE];
 
 void uart_rx_callback();
 void uart_tx_callback();
@@ -18,12 +23,9 @@ void uart_tx_callback();
 int uart_init() {
 
 	// Create IObuffers (probably quite oversized)
-	uart_rx_buf = IObuffer_create(32);
-	uart_tx_buf = IObuffer_create(32);
-
-	uart_rx_buf->bytes_ready = uart_rx_callback;
+	IObuffer_init(uart_rx_buf, &uart_rx_chars, UART_BUF_SIZE, uart_rx_callback);
 	uart_rx_buf->callback_once = 0;
-	uart_tx_buf->bytes_ready = uart_tx_callback;
+	IObuffer_init(uart_tx_buf, &uart_tx_chars, UART_BUF_SIZE, uart_tx_callback);
 	uart_tx_buf->callback_once = 1;
 
 	// Set up USCIA0
@@ -40,7 +42,7 @@ int uart_init() {
 	UCA0MCTL = UCBRS_6;
 #endif
 
-	P1SEL |= UART_RX | UART_TX;
+	P1SEL |= UART_RX | UART_TX;		// Pins in USCI mode
 	P1SEL2 |= UART_RX | UART_TX;
 
 	UCA0CTL1 &= ~UCSWRST;			// Start USCIA0

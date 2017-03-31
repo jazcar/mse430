@@ -18,5 +18,6 @@ extern volatile int motor_b_rate;
 int motor_init();
 void set_motor_a_power(int power);
 void set_motor_b_power(int power);
+void motor_update_rates();
 
 #endif /* MOTOR_H_ */

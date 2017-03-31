@@ -14,7 +14,7 @@
 int uart_init();
 
 // IObuffers
-extern IObuffer* uart_rx_buf;
-extern IObuffer* uart_tx_buf;
+extern IObuffer* const uart_rx_buf;
+extern IObuffer* const uart_tx_buf;
 
 #endif /* UART_H_ */

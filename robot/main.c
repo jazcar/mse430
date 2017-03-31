@@ -7,44 +7,38 @@
 
 #include <msp430.h>
 #include "mse430.h"
-#include "motor.h"
-#include "uart.h"
+#include "events.h"
 
 union message {
-	char bytes[4];
-	struct {
-		int arg_a;
-		int arg_b;
-	} command;
+    char bytes[4];
+    struct {
+        int arg_a;
+        int arg_b;
+    } command;
 } message;
 
 int main(void) {
 
-	mse430_init();
+	// Initialize everything
+    mse430_init();
 
+	// Event service routine loop
 	while (1) {
 
-		char c;
+		// Disable interrupts to avoid race conditions
+		__disable_interrupt();
 
-		while(IOgetc(&c, uart_rx_buf))
-			__bis_SR_register(LPM0_bits+GIE);
-		if (c != 'P')
-			continue;
-		while(IOgetc(&message.bytes[0], uart_rx_buf))
-			__bis_SR_register(LPM0_bits+GIE);
-		while(IOgetc(&message.bytes[1], uart_rx_buf))
-			__bis_SR_register(LPM0_bits+GIE);
-		while(IOgetc(&message.bytes[2], uart_rx_buf))
-			__bis_SR_register(LPM0_bits+GIE);
-		while(IOgetc(&message.bytes[3], uart_rx_buf))
-			__bis_SR_register(LPM0_bits+GIE);
+		WATCHDOG;
 
-		set_motor_a_power(message.command.arg_a);
-		set_motor_b_power(message.command.arg_b);
-		message.command.arg_a = motor_a_rate;
-		message.command.arg_b = motor_b_rate;
+		// Check if any events are pending
+		if (sys_event) {
+			__enable_interrupt();
+		} else {
+			__bis_SR_register(LPM0_bits + GIE);
+			continue;  // Check again in case of spurious wakeups
+		}
 
-		IOnputs(message.bytes, 4, uart_tx_buf);
+		events_service();
 	}
 
 }
