@@ -7,6 +7,7 @@
 
 #include "motor.h"
 #include <msp430.h>
+#include "mse430.h"
 #include "pins.h"
 
 #define ALL_MOTOR_IN (MOTOR_A_IN_1 | MOTOR_A_IN_2 | MOTOR_B_IN_1 | MOTOR_B_IN_2)
@@ -16,7 +17,6 @@
 #define QUAD_DIR_B  1
 
 const int max_power = 500;
-const int max_speed = 80;         // TODO: Should this be const?
 
 volatile signed long motor_a_count = 0;
 volatile signed long motor_b_count = 0;
@@ -24,8 +24,6 @@ volatile char quadrature_a;
 volatile char quadrature_b;
 volatile int motor_a_rate;
 volatile int motor_b_rate;
-volatile int motor_a_target;
-volatile int motor_b_target;
 
 int motor_init() {
 
@@ -59,7 +57,7 @@ int motor_init() {
     return 0;
 }
 
-void set_motor_a_power(int power) {
+void motor_a_set_power(int power) {
 
     P2SEL &= ~(MOTOR_A_IN_1 | MOTOR_A_IN_2);
 
@@ -84,7 +82,7 @@ void set_motor_a_power(int power) {
     }
 }
 
-void set_motor_b_power(int power) {
+void motor_b_set_power(int power) {
 
     P2SEL &= ~(MOTOR_B_IN_1 | MOTOR_B_IN_2);
 
@@ -107,26 +105,6 @@ void set_motor_b_power(int power) {
         TA1CCR2 = -power;
         TA1CCTL2 = OUTMOD_3;
     }
-}
-
-void set_motor_a_target(int vel) {
-  
-    if (vel > max_speed)
-        motor_a_target = max_speed;
-    else if (vel < -max_speed)
-        motor_a_target = -max_speed;
-    else
-        motor_a_target = vel;
-}
-
-void set_motor_b_target(int vel) {
-  
-    if (vel > max_speed)
-        motor_b_target = max_speed;
-    else if (vel < -max_speed)
-        motor_b_target = -max_speed;
-    else
-        motor_b_target = vel;
 }
 
 void motor_update_rates() {

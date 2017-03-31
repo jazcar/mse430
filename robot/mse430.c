@@ -11,6 +11,11 @@
 #include "uart.h"
 #include "motor.h"
 
+// Public variables
+volatile char tick_flag = 0;
+volatile unsigned long ticks = 0;
+
+// Local function prototypes
 void mse430_clock_init();
 
 void mse430_init() {
@@ -86,5 +91,7 @@ __interrupt void USCI_RX_ISR() {
 #pragma vector = WDT_VECTOR
 __interrupt void WDT_ISR() {
 	motor_update_rates();
+	tick_flag = 1;
+	ticks++;
     __bic_SR_register_on_exit(LPM0_bits);
 }
