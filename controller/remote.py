@@ -46,10 +46,10 @@ class Remote:
             self.robot.flush()
             if self.app is not None:
                 packet = self.robot.read(4)
-                if len(packet) == 4:
-                    speed = unpack('<hh', packet)
-                self.app.a_cell.text = str(speed[0])
-                self.app.b_cell.text = str(speed[1])
+                if len(packet) >= 4:
+                    speed = unpack('<hh', packet[-4:])
+                    self.app.a_cell.text = str(speed[0])
+                    self.app.b_cell.text = str(speed[1])
 
     def shutdown(self):
         self.set_power((0, 0))

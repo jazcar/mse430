@@ -1,44 +1,16 @@
 #!/usr/bin/env python3
 
-#import bluetooth as bt
+import bluetooth as bt
 from struct import pack
-from platform import system
-from glob import glob
 
 
-class Remote:
-    def __init__(self, app=None):
-        self.app = app
-        if system() == 'Darwin':
-            dev_files = glob('/dev/tty.MSE430-0*')  # FIXME
-            if len(dev_files) is 1:
-                print('Opening port to robot at', dev_files[0], end='')
-                self.robot = open(dev_files[0], 'w+b')
-                print(' Done')
-            elif len(dev_files) > 1:
-                print('More than one robot found. Which one do you want?',
-                      file=stderr)
-                exit(len(dev_files))
-            else:
-                print('Could not find a robot.')
-                exit(1)
-        # elif system() == 'Linux':
-        #     print('Opening port to robot at /dev/tty????', end='')
-        #     exit(1)
-        #     self.robot = open('/dev/tty????', 'wb')
-        #     print(' Done')
-        else:
-            print('System configuration ', system(), ' is not compatible.')
-            exit(1)
-
-# From ubuntu...
-# class Robot:
-#     def __init__(self, dev, log=False):
-#         self.socket = None
-#         self.addr, self.name = dev
-#         if self.name[:7] != 'MSE430-':
-#             raise ValueError('Invalid device name', self.name)
-#         self.log = log
+class Robot:
+    def __init__(self, dev, log=False):
+        self.socket = None
+        self.addr, self.name = dev
+        if self.name[:7] != 'MSE430-':
+            raise ValueError('Invalid device name', self.name)
+        self.log = log
 
     def connect(self):
         while not self.socket:
