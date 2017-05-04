@@ -28,6 +28,7 @@ class Server():
         self.loop.stop()
 
     def close(self):
+        self.robot.close()
         self.server.close()
         self.loop.run_until_complete(self.server.wait_closed())
         self.loop.close()
@@ -44,15 +45,15 @@ class Server():
     def setspeed(self, speed_a, speed_b):
         speed_a = int(speed_a)
         speed_b = int(speed_b)
-        asyncio.wait_for(asyncio.ensure_future(self.robot.set_speed(
-            speed_a, speed_b), loop=self.loop), self.TIMEOUT, loop=self.loop)
+        asyncio.ensure_future(self.robot.set_speed(speed_a, speed_b),
+                              loop=self.loop)
         return 'speed: {:d}, {:d}'.format(speed_a, speed_b)
 
     def setpower(self, power_a, power_b):
         power_a = int(power_a)
         power_b = int(power_b)
-        asyncio.wait_for(asyncio.ensure_future(self.robot.set_power(
-            power_a, power_b), loop=self.loop), self.TIMEOUT, loop=self.loop)
+        asyncio.ensure_future(self.robot.set_power(power_a, power_b),
+                              loop=self.loop)
         return 'power: {:d}, {:d}'.format(power_a, power_b)
 
     def setparam(self, name, value):

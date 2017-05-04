@@ -15,10 +15,11 @@ class Robot:
         self.btcomm = BTComm(self.addr, self.loop)
 
     async def connect(self):
-        print('Connecting to {}'.format(self.addr))
         await self.btcomm.connect()
-        print('Bluetooth connection successful')
         asyncio.ensure_future(self.read_task(), loop=self.loop)
+
+    def close(self):
+        self.btcomm.close()
     
     async def read_task(self):
         data = b''
@@ -29,11 +30,11 @@ class Robot:
 
     async def set_power(self, power_a, power_b):
         message = pack('<chh', b'P', power_a, power_b)
-        await self.btcomm.write(message)
+        self.btcomm.write(message)
 
     async def set_speed(self, speed_a, speed_b):
         message = pack('<chh', b'S', speed_a, speed_b)
-        await self.btcomm.write(message)
+        self.btcomm.write(message)
 
     def get_speed(self):
         return 0, 0
