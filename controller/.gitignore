@@ -99,4 +99,6 @@ ENV/
 .\#*
 *.nb
 /test-images/
+/cs470venv/
+/mse430/
 
