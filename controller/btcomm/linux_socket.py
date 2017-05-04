@@ -1,28 +1,30 @@
 import socket
 import asyncio
-import selectors
 
 
 class BTComm:
-    def __init__(self, addr):
+    def __init__(self, addr, loop):
         self.addr = addr
+        self.loop = loop
         self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM,
                                   socket.BTPROTO_RFCOMM)
+        self.queue = asyncio.Queue(loop=loop)
         self.sock.setblocking(0)
-        
+
     async def connect(self):
+        print('Connecting to {}'.format(self.addr))
         self.sock.connect((self.addr, 1))
-        selector = selectors.DefaultSelector()
-        selector.register(self.sock, selectors.EVENT_WRITE)
-        while not selector.select(0):
-            await asyncio.sleep(0.05)
+        selector = asyncio.selectors.DefaultSelector()
+        selector.register(self.sock, asyncio.selectors.EVENT_WRITE)
+        while not selector.select():
+            print('Bluetooth waiting...')
+            asyncio.sleep(0.1)
         selector.close()
+        self.loop.add_reader(self.sock, lambda: self.queue.put_nowait(
+            self.sock.recv(100)))
+        print('Bluetooth connection successful')
 
-    async def 
-        
-
-def reader():
-    data
-
-def btcomm(addr):
-    pass
+    def write(self, data):
+        print('Robot send: {}'.format(data.hex()))
+        self.sock.send(data)
+        # Wait for complete?

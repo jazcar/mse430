@@ -1,12 +1,15 @@
 import asyncio
-#from robot import Robot
+from robot import Robot
 #from vision import Vision
 
 
 class Server():
 
+    TIMEOUT = 2.0
+    
     def __init__(self, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
+        self.robot = Robot('MSE430-5', self.loop)
         self.server = None
         
     def run(self):
@@ -14,6 +17,7 @@ class Server():
             lambda: ServerProtocol(self), port=55555))
         print('Serving on {}'.format(self.server.sockets[0].getsockname()))
         try:
+            self.loop.run_until_complete(self.robot.connect())
             self.loop.run_forever()
         except KeyboardInterrupt:
             pass
@@ -31,17 +35,25 @@ class Server():
     def objects(self):
         return 'objects woo'
 
-    def robot(self):
+    def getrobot(self):
         return 'robots yay'
 
     def obstacles(self):
         return 'some obstacles'
 
     def setspeed(self, speed_a, speed_b):
-        return 'speed: {:d}, {:d}'.format(int(speed_a), int(speed_b))
+        speed_a = int(speed_a)
+        speed_b = int(speed_b)
+        asyncio.wait_for(asyncio.ensure_future(self.robot.set_speed(
+            speed_a, speed_b), loop=self.loop), self.TIMEOUT, loop=self.loop)
+        return 'speed: {:d}, {:d}'.format(speed_a, speed_b)
 
     def setpower(self, power_a, power_b):
-        return 'power: {:d}, {:d}'.format(int(power_a), int(power_b))
+        power_a = int(power_a)
+        power_b = int(power_b)
+        asyncio.wait_for(asyncio.ensure_future(self.robot.set_power(
+            power_a, power_b), loop=self.loop), self.TIMEOUT, loop=self.loop)
+        return 'power: {:d}, {:d}'.format(power_a, power_b)
 
     def setparam(self, name, value):
         raise NotImplementedError('Nope')
@@ -53,7 +65,7 @@ class ServerProtocol(asyncio.Protocol):
         self.transport = None
         self.commands = {
             'objects': self.server.objects,
-            'robot': self.server.robot,
+            'robot': self.server.getrobot,
             'obstacles': self.server.obstacles,
             'setspeed': self.server.setspeed,
             'setpower': self.server.setpower,
@@ -70,9 +82,13 @@ class ServerProtocol(asyncio.Protocol):
         self.server.stop()
         
     def write(self, data):
-        self.transport.write((str(data)+'\n').encode())
+        data = str(data)
+        print('Sent: {}'.format(data))
+        self.transport.write((data+'\n').encode())
 
     def data_received(self, data):
+        if not data:
+            return
         print('Received: {}'.format(data.strip().decode()))
         cmd = data.split()[0].lower().decode()
         args = data.split()[1:]

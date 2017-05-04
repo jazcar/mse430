@@ -1,5 +1,7 @@
-from btcomm import BTcomm
+import asyncio
 from struct import pack, unpack
+from btcomm import BTComm
+
 
 class Robot:
     def __init__(self, name, loop):
@@ -10,19 +12,38 @@ class Robot:
         except KeyError:
             raise ValueError('Unrecognized name: {} interpreted as {}'.format(
                 name, self.name))
-        self.btcomm = bt
+        self.btcomm = BTComm(self.addr, self.loop)
 
-    def connect(self):
-        pass
+    async def connect(self):
+        print('Connecting to {}'.format(self.addr))
+        await self.btcomm.connect()
+        print('Bluetooth connection successful')
+        asyncio.ensure_future(self.read_task(), loop=self.loop)
     
-    def set_power(self, power_a, power_b):
-        message = pack('<chh', b'P', power_a, power_b)
+    async def read_task(self):
+        data = b''
+        while True:
+            data += await self.btcomm.queue.get()
+            print(data)
+            data = b''
 
-    def set_speed(self, speed_a, speed_b):
+    async def set_power(self, power_a, power_b):
+        message = pack('<chh', b'P', power_a, power_b)
+        await self.btcomm.write(message)
+
+    async def set_speed(self, speed_a, speed_b):
         message = pack('<chh', b'S', speed_a, speed_b)
+        await self.btcomm.write(message)
 
     def get_speed(self):
         return 0, 0
 
     def set_param(self, name, value):
         raise NotImplementedError()
+
+
+ADDRESSES = {
+    'MSE430-0': '20:16:01:20:14:43',
+    'MSE430-2': '20:15:12:28:78:04',
+    'MSE430-5': '20:16:01:18:86:01'
+    }
