@@ -1,6 +1,7 @@
 import asyncio
+import json
 from robot import Robot
-#from vision import Vision
+from vision import Vision
 
 
 class Server():
@@ -10,6 +11,7 @@ class Server():
     def __init__(self, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
         self.robot = Robot('MSE430-5', self.loop)
+        self.vision = Vision(self.loop)
         self.server = None
         self.commands = {
             'objects': self.objects,
@@ -25,6 +27,7 @@ class Server():
     def run(self):
         try:
             self.loop.run_until_complete(self.robot.connect())
+            asyncio.ensure_future(self.vision.run())
             self.server = self.loop.run_until_complete(
                 self.loop.create_server(lambda: ServerProtocol(self),
                                         port=55555))
@@ -48,17 +51,17 @@ class Server():
     def objects(self):
         """objects -- Return positions of all tracked objects in view"""
 
-        return 'objects woo'
+        return json.dumps({'objects': self.vision.objects})
 
     def getrobot(self):
         """robot -- Return position of the robot"""
 
-        return 'robots yay'
+        return json.dumps({'robot': self.vision.robot})
 
     def obstacles(self):
         """obstacles -- Return positions of all obstacles in view"""
 
-        return 'some obstacles'
+        return json.dumps({'obstacles': self.vision.obstacles})
 
     def setspeed(self, speed_a, speed_b):
         """setspeed speed_a speed_b -- Set motor target speed (?-??)"""
@@ -67,7 +70,7 @@ class Server():
         speed_b = int(speed_b)
         asyncio.ensure_future(self.robot.set_speed(speed_a, speed_b),
                               loop=self.loop)
-        return 'speed: {:d}, {:d}'.format(speed_a, speed_b)
+        return json.dumps({'speed_a': speed_a, 'speed_b': speed_b})
 
     def setpower(self, power_a, power_b):
         """setpower power_a power_b -- Directly set motor power (0-500)"""
@@ -76,7 +79,7 @@ class Server():
         power_b = int(power_b)
         asyncio.ensure_future(self.robot.set_power(power_a, power_b),
                               loop=self.loop)
-        return 'power: {:d}, {:d}'.format(power_a, power_b)
+        return 'speed: {:d}, {:d}'.format(speed_a, speed_b)
 
     def setparam(self, name, value):
         """setparam name value -- Configure the robot (not implemented)"""
@@ -121,7 +124,7 @@ class ServerProtocol(asyncio.Protocol):
                 self.write(self.server.commands[cmd](*args))
             except Exception as e:
                 self.write('{} occurred while handling "{}": {}'.format(
-                    type(e).__name__, data.strip().decode(), str(e)))
+                    type(e).__name__, data, str(e)))
                 raise e
         else:
             self.write('Unknown command: "{}"'.format(cmd))
