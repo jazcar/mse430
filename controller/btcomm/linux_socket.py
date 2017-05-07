@@ -30,12 +30,6 @@ class BTComm:
             else:
                 break
         self.sock.setblocking(0)
-        # selector = asyncio.selectors.DefaultSelector()
-        # selector.register(self.sock, asyncio.selectors.EVENT_WRITE)
-        # while not selector.select():
-        #     print('Bluetooth waiting...')
-        #     asyncio.sleep(0.1)
-        # selector.close()
         self.loop.add_reader(self.sock, lambda: self.queue.put_nowait(
             self.sock.recv(100)))
         print('Bluetooth connection successful')

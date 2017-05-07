@@ -25,6 +25,7 @@ class Robot:
         data = b''
         while True:
             data += await self.btcomm.queue.get()
+            #print('Speed: {1:d4}, {2:d4}'.format(*unpack('<chh', data[:5])))
             print(data)
             data = b''
 

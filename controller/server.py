@@ -27,7 +27,7 @@ class Server():
     def run(self):
         try:
             self.loop.run_until_complete(self.robot.connect())
-            asyncio.ensure_future(self.vision.run())
+            #asyncio.ensure_future(self.vision.run())
             self.server = self.loop.run_until_complete(
                 self.loop.create_server(lambda: ServerProtocol(self),
                                         port=55555))
@@ -79,7 +79,7 @@ class Server():
         power_b = int(power_b)
         asyncio.ensure_future(self.robot.set_power(power_a, power_b),
                               loop=self.loop)
-        return 'speed: {:d}, {:d}'.format(speed_a, speed_b)
+        return json.dumps({'power_a': power_a, 'power_b': power_b})
 
     def setparam(self, name, value):
         """setparam name value -- Configure the robot (not implemented)"""
