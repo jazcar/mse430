@@ -10,7 +10,7 @@ class Server():
     
     def __init__(self, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
-        self.robot = Robot('MSE430-5', self.loop)
+        self.robot = Robot('MSE430-2', self.loop)
         self.vision = Vision(self.loop)
         self.server = None
         self.commands = {
@@ -18,6 +18,7 @@ class Server():
             'robot': self.getrobot,
             'obstacles': self.obstacles,
             'setspeed': self.setspeed,
+            'getspeed': self.getspeed,
             'setpower': self.setpower,
             'setparam': self.setparam,
             'help': self.help,
@@ -70,7 +71,12 @@ class Server():
         speed_b = int(speed_b)
         asyncio.ensure_future(self.robot.set_speed(speed_a, speed_b),
                               loop=self.loop)
-        return json.dumps({'speed_a': speed_a, 'speed_b': speed_b})
+        return self.getspeed()
+
+    def getspeed(self):
+        """getspeed -- Returns current motor speeds"""
+        return json.dumps({'speed_a': self.robot.speed[0],
+                           'speed_b': self.robot.speed[1]})
 
     def setpower(self, power_a, power_b):
         """setpower power_a power_b -- Directly set motor power (0-500)"""
@@ -79,7 +85,7 @@ class Server():
         power_b = int(power_b)
         asyncio.ensure_future(self.robot.set_power(power_a, power_b),
                               loop=self.loop)
-        return json.dumps({'power_a': power_a, 'power_b': power_b})
+        return self.getspeed()
 
     def setparam(self, name, value):
         """setparam name value -- Configure the robot (not implemented)"""
@@ -92,7 +98,8 @@ class Server():
             return self.commands[command.lower()].__doc__
         else:
             return '\n'.join([x.__doc__ for x in self.commands.values()])
-        
+
+
 class ServerProtocol(asyncio.Protocol):
     def __init__(self, server):
         self.server = server

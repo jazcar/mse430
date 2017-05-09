@@ -9,7 +9,7 @@ class BTComm:
         self.retries = retries
         self.sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM,
                                   socket.BTPROTO_RFCOMM)
-        self.queue = asyncio.Queue(loop=loop)
+        self.reader = asyncio.StreamReader(loop=self.loop)
 
     async def connect(self):
         print('Bluetooth connecting to {}'.format(self.addr))
@@ -30,7 +30,7 @@ class BTComm:
             else:
                 break
         self.sock.setblocking(0)
-        self.loop.add_reader(self.sock, lambda: self.queue.put_nowait(
+        self.loop.add_reader(self.sock, lambda: self.reader.feed_data(
             self.sock.recv(100)))
         print('Bluetooth connection successful')
 

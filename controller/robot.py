@@ -13,21 +13,24 @@ class Robot:
             raise ValueError('Unrecognized name: {} interpreted as {}'.format(
                 name, self.name))
         self.btcomm = BTComm(self.addr, self.loop)
+        self.speeds = (0, 0)
 
     async def connect(self):
         await self.btcomm.connect()
-        asyncio.ensure_future(self.read_task(), loop=self.loop)
+        asyncio.ensure_future(self.reader(), loop=self.loop)
 
     def close(self):
         self.btcomm.close()
     
-    async def read_task(self):
+    async def reader(self):
         data = b''
         while True:
-            data += await self.btcomm.queue.get()
-            #print('Speed: {1:d4}, {2:d4}'.format(*unpack('<chh', data[:5])))
-            print(data)
-            data = b''
+            tag = await self.btcomm.reader.readexactly(1)
+            if tag == b'S':
+                self.speeds = unpack('<hh', await
+                                     self.btcomm.reader.readexactly(4))
+            else:
+                print('Robot: Unexpected character {} received'.format(tag))
 
     async def set_power(self, power_a, power_b):
         message = pack('<chh', b'P', power_a, power_b)
@@ -36,9 +39,6 @@ class Robot:
     async def set_speed(self, speed_a, speed_b):
         message = pack('<chh', b'S', speed_a, speed_b)
         self.btcomm.write(message)
-
-    def get_speed(self):
-        return 0, 0
 
     def set_param(self, name, value):
         raise NotImplementedError()
