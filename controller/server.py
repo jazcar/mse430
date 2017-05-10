@@ -75,8 +75,7 @@ class Server():
 
     def getspeed(self):
         """getspeed -- Returns current motor speeds"""
-        return json.dumps({'speed_a': self.robot.speed[0],
-                           'speed_b': self.robot.speed[1]})
+        return json.dumps(self.robot.speeds)
 
     def setpower(self, power_a, power_b):
         """setpower power_a power_b -- Directly set motor power (0-500)"""

@@ -11,7 +11,7 @@ class BTComm:
                                   socket.BTPROTO_RFCOMM)
         self.reader = asyncio.StreamReader(loop=self.loop)
 
-    async def connect(self):
+    def connect(self):
         print('Bluetooth connecting to {}'.format(self.addr))
         for n in range(self.retries, -1, -1):
             try:

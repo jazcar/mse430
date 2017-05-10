@@ -16,7 +16,7 @@ class Robot:
         self.speeds = {'speed_a': 0, 'speed_b': 0, 'time': None}
 
     async def connect(self):
-        await self.btcomm.connect()
+        self.btcomm.connect()
         asyncio.ensure_future(self.reader(), loop=self.loop)
 
     def close(self):

@@ -14,10 +14,12 @@ class BTComm:
     def getport(self):
         btdump = subprocess.run(['system_profiler', 'SPBluetoothDataType'],
                                 stdout=subprocess.PIPE).stdout
-        lines = str(btdump.split(b'\n').strip(b' :'))
+        lines = list(map(lambda s: s.strip(b' :').decode(),
+                         btdump.split(b'\n')))
         del lines[:lines.index('Outgoing Serial Ports')]
         try:
-            dex = lines.index(self.addr)
+            dex = lines.index('Address: {}'.format(
+                self.addr.replace(':', '-')))
             return '/dev/tty.{}'.format(lines[dex-1])
         except ValueError:
             raise OSError('No port found for {}. Is the device paired?'.format(
