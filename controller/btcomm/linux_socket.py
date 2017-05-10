@@ -16,7 +16,7 @@ class BTComm:
         for n in range(self.retries, -1, -1):
             try:
                 self.sock.connect((self.addr, 1))
-            except OSError:
+            except OSError as ose:
                 print('Bluetooth connection failed.', end=' ')
                 if n > 0:
                     print('Retrying... ({} remaining)'.format(n), flush=True)
@@ -26,7 +26,7 @@ class BTComm:
                                               socket.BTPROTO_RFCOMM)
                 else:
                     print('Aborting', flush=True)
-                    raise OSError
+                    raise ose
             else:
                 break
         self.sock.setblocking(0)
@@ -34,11 +34,11 @@ class BTComm:
             self.sock.recv(100)))
         print('Bluetooth connection successful')
 
+    def write(self, data):
+        self.sock.send(data)
+        # Wait for complete?
+
     def close(self):
         self.loop.remove_reader(self.sock)
         self.sock.close()
 
-    def write(self, data):
-        print('Robot send: {}'.format(data.hex()))
-        self.sock.send(data)
-        # Wait for complete?

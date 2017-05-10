@@ -13,7 +13,7 @@ class Robot:
             raise ValueError('Unrecognized name: {} interpreted as {}'.format(
                 name, self.name))
         self.btcomm = BTComm(self.addr, self.loop)
-        self.speeds = (0, 0)
+        self.speeds = {'speed_a': 0, 'speed_b': 0, 'time': None}
 
     async def connect(self):
         await self.btcomm.connect()
@@ -27,8 +27,10 @@ class Robot:
         while True:
             tag = await self.btcomm.reader.readexactly(1)
             if tag == b'S':
-                self.speeds = unpack('<hh', await
-                                     self.btcomm.reader.readexactly(4))
+                speeds = unpack('<hh', await
+                                self.btcomm.reader.readexactly(4))
+                self.speeds['speed_a'] = speeds[0]
+                self.speeds['speed_b'] = speeds[1]
             else:
                 print('Robot: Unexpected character {} received'.format(tag))
 
