@@ -1,0 +1,8 @@
+This project uses the Qmath library from TI. Setting up the project so
+it will compile requires downloading and installing the library,
+following the instructions to create the empty example project,
+deleting the main source file, and adding/linking to these source
+files. It's not a great solution, and perhaps later I'll see if the
+library settings transfer if I save the whole project here. Until
+then, I'm just going to do it this way, sorry...
+
