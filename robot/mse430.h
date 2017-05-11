@@ -14,5 +14,6 @@ extern volatile unsigned long ticks;
 
 // Public function prototypes
 void mse430_init();
+int constrain(int, int, int);
 
 #endif /* MSE430_H_ */

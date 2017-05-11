@@ -13,8 +13,6 @@
 #define GLOBAL_Q 8
 #include "QmathLib.h"
 
-const int max_speed = 1000;         // TODO: Should this be const?
-
 volatile int speed_a_target = 0;
 volatile int speed_b_target = 0;
 
@@ -22,6 +20,7 @@ int k_p = _Q(1.0);
 int k_i = _Q(0.1);
 int k_d = _Q(0.1);
 int int_cap = 0;
+int max_speed = 0;
 
 void speed_controller_tick() {
 
@@ -59,7 +58,10 @@ void speed_controller_tick() {
 
 void speed_a_set_target(int val) {
 
-    speed_a_target = constrain(val, -max_speed, max_speed);
+    if (max_speed > 0)
+        speed_a_target = constrain(val, -max_speed, max_speed);
+    else
+        speed_a_target = val;
     controller_on = 1;
 }
 
