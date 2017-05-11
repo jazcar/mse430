@@ -10,56 +10,60 @@
 #include "mse430.h"
 #include "motor.h"
 
+#define GLOBAL_Q 8
+#include "QmathLib.h"
+
 const int max_speed = 1000;         // TODO: Should this be const?
 
 volatile int speed_a_target = 0;
 volatile int speed_b_target = 0;
 
-#define FIXED_POINT_OFFSET 8
-
-int k_prop = 1 << FIXED_POINT_OFFSET;
-int k_der = 0 << FIXED_POINT_OFFSET;
-//int integral_coefficient = 0;
+int k_p = _Q(1.0);
+int k_i = _Q(0.1);
+int k_d = _Q(0.1);
 
 void speed_controller_tick() {
 
 	static int old_a_err = 0;
 	static int old_b_err = 0;
-
+	static int err_a_int = 0;
+	static int err_b_int = 0;
+    int err_a_der, err_b_der;
 	int speed_a_err = speed_a_target - motor_a_rate;
 	int speed_b_err = speed_b_target - motor_b_rate;
 
-	int err_a_der = old_a_err - speed_a_err;
-	int err_b_der = old_b_err - speed_b_err;
+	err_a_der = old_a_err - speed_a_err;
+	err_b_der = old_b_err - speed_b_err;
 
-	old_a_err = speed_a_err;
-	old_b_err = speed_b_err;
+    old_a_err = speed_a_err;
+    old_b_err = speed_b_err;
 
-	long temp;
-	temp = k_prop * speed_a_err + k_der * err_a_der;
-	int power_a = (int)(temp >> FIXED_POINT_OFFSET);
-	motor_a_set_power(power_a);
-	temp = k_prop * speed_b_err + k_der * err_b_der;
-	int power_b = (int)(temp >> FIXED_POINT_OFFSET);
-	motor_b_set_power(power_b);
+	err_a_int += speed_a_err;
+	err_b_int += speed_b_err;
+
+	if (int_cap > 0) {
+	    err_a_int = constrain(err_a_int, -int_cap, int_cap);
+	    err_b_int = constrain(err_b_int, -int_cap, int_cap);
+	}
+
+	motor_a_set_power(
+	        _QmpyI16int(k_p, speed_a_err) +
+	        _QmpyI16int(k_i, err_a_int) +
+	        _QmpyI16int(k_d, err_a_der) );
+	motor_b_set_power(
+	        _QmpyI16int(k_p, speed_b_err) +
+	        _QmpyI16int(k_i, err_b_int) +
+	        _QmpyI16int(k_d, err_b_der) );
 }
 
 void speed_a_set_target(int val) {
 
-    if (val > max_speed)
-    	speed_a_target = max_speed;
-    else if (val < -max_speed)
-    	speed_a_target = -max_speed;
-    else
-    	speed_a_target = val;
+    speed_a_target = constrain(val, -max_speed, max_speed);
+    controller_on = 1;
 }
 
 void speed_b_set_target(int val) {
 
-    if (val > max_speed)
-    	speed_b_target = max_speed;
-    else if (val < -max_speed)
-    	speed_b_target = -max_speed;
-    else
-    	speed_b_target = val;
+    speed_b_target = constrain(val, -max_speed, max_speed);
+    controller_on = 1;
 }

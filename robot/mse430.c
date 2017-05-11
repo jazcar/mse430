@@ -13,6 +13,7 @@
 
 // Public variables
 volatile char tick_flag = 0;
+volatile char controller_on = 0;
 volatile unsigned long ticks = 0;
 
 // Local function prototypes
@@ -65,6 +66,15 @@ void mse430_clock_init() {
 	while (BCSCTL3 & LFXT1OF)
 		__bis_SR_register(LPM0_bits);	// WDT will wake it up
 	IFG1 &= ~OFIFG;						// Clear oscillator interrupt flag
+}
+
+int constrain(int in, int min, int max) {
+    if (in < min)
+        return min;
+    else if (in > max)
+        return max;
+    else
+        return in;
 }
 
 #pragma vector = USCIAB0TX_VECTOR

@@ -9,7 +9,7 @@
 #define MSE430_H_
 
 // Public variables
-extern volatile char tick_flag;
+extern volatile char tick_flag, controller_on;
 extern volatile unsigned long ticks;
 
 // Public function prototypes

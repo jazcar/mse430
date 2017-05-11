@@ -39,7 +39,8 @@ int main(void) {
 
 			// Run speed controller
 			tick_flag = 0;
-			speed_controller_tick();
+			if (controller_on)
+			    speed_controller_tick();
 
 			// Send speed back to remote
 			message.command.arg_a = motor_a_rate;
