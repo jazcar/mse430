@@ -20,6 +20,7 @@ int k_p = _Q(1.0);
 int k_i = _Q(0.1);
 int k_d = _Q(0.1);
 int int_cap = 0;
+int int_dom = 0;
 int max_speed = 0;
 
 void speed_controller_tick() {

@@ -10,6 +10,7 @@
 #include "uart.h"
 #include "motor.h"
 #include "speed.h"
+#include "commands.h"
 
 union message {
 	char bytes[4];
