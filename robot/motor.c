@@ -80,7 +80,6 @@ void motor_a_set_power(int power) {
         TA1CCR1 = -power;
         TA1CCTL1 = OUTMOD_3;
     }
-    controller_on = 0;
 }
 
 void motor_b_set_power(int power) {
@@ -106,7 +105,6 @@ void motor_b_set_power(int power) {
         TA1CCR2 = -power;
         TA1CCTL2 = OUTMOD_3;
     }
-    controller_on = 0;
 }
 
 void motor_update_rates() {

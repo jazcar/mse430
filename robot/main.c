@@ -25,14 +25,10 @@ int main(void) {
 	// Initialize everything
 	mse430_init();
 
-	// Loop forever -- this is a priority scheduler, so higher listed
-	// tasks will always take precedence over and can starve lower
-	// tasks. We aren't doing much here so it's okay. This may go to
-	// sleep if a flag was set just after it checked, but for
-	// simplicity I'm leaving that for now. It wakes up 64 times a
-	// second anyway, so it'll catch it eventually. (TODO?)
+	// Loop forever
 	while (1) {
 
+		// Avoid nasty race conditions
 		__disable_interrupt();
 
 		if (tick_flag) {

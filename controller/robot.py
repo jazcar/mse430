@@ -31,23 +31,34 @@ class Robot:
                                 self.btcomm.reader.readexactly(4))
                 self.speeds['speed_a'] = speeds[0]
                 self.speeds['speed_b'] = speeds[1]
+                print('{:3d}, {:3d}'.format(speeds[0], speeds[1]))
             else:
                 print('Robot: Unexpected character {} received'.format(tag))
 
-    async def set_power(self, power_a, power_b):
+    def set_power(self, power_a, power_b):
         message = pack('<chh', b'P', power_a, power_b)
         self.btcomm.write(message)
 
-    async def set_speed(self, speed_a, speed_b):
+    def set_speed(self, speed_a, speed_b):
         message = pack('<chh', b'S', speed_a, speed_b)
         self.btcomm.write(message)
 
+    PARAM_SCALES = {'kp': 8, 'ki': 8, 'kd': 8, 'ic': 0, 'id': 0, 'ms': 0}
+    
     def set_param(self, name, value):
-        raise NotImplementedError()
+        if name in self.PARAM_SCALES:
+            message = pack('<ccch', b'K', *[c.encode() for c in name],
+                           round(value * (1 << self.PARAM_SCALES[name])))
+            self.btcomm.write(message)
+        else:
+            raise ValueError('Invalid parameter name')
 
 
 ADDRESSES = {
     'MSE430-0': '20:16:01:20:14:43',
+    'MSE430-1': '20:15:12:22:05:59',
     'MSE430-2': '20:15:12:28:78:04',
+    'MSE430-3': '20:15:12:21:90:81',
+    'MSE430-4': '20:16:01:19:72:73',
     'MSE430-5': '20:16:01:18:86:01'
     }

@@ -6,11 +6,9 @@ from vision import Vision
 
 class Server():
 
-    TIMEOUT = 2.0
-    
     def __init__(self, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
-        self.robot = Robot('MSE430-2', self.loop)
+        self.robot = Robot('MSE430-4', self.loop)
         self.vision = Vision(self.loop)
         self.server = None
         self.commands = {
@@ -69,9 +67,8 @@ class Server():
         
         speed_a = int(speed_a)
         speed_b = int(speed_b)
-        asyncio.ensure_future(self.robot.set_speed(speed_a, speed_b),
-                              loop=self.loop)
-        return self.getspeed()
+        self.robot.set_speed(speed_a, speed_b)
+        return json.dumps('OK')
 
     def getspeed(self):
         """getspeed -- Returns current motor speeds"""
@@ -82,21 +79,29 @@ class Server():
 
         power_a = int(power_a)
         power_b = int(power_b)
-        asyncio.ensure_future(self.robot.set_power(power_a, power_b),
-                              loop=self.loop)
-        return self.getspeed()
+        self.robot.set_power(power_a, power_b)
+        return json.dumps('OK')
 
     def setparam(self, name, value):
-        """setparam name value -- Configure the robot (not implemented)"""
-
-        raise NotImplementedError('Nope')
+        """
+        setparam name value -- Configure the robot (not implemented)
+        kp: Proportional term gain
+        ki: Integral term gain
+        kd: Derivative term gain
+        ic: Integral term cap
+        id: Integral term domain (integral ignored if error > id)
+        ms: Max speed
+        """
+        self.robot.set_param(name, float(value))
+        return json.dumps('OK')
 
     def help(self, command=None):
         """help | ? [command] -- Display all commands or details of one"""
         if command:
             return self.commands[command.lower()].__doc__
         else:
-            return '\n'.join([x.__doc__ for x in self.commands.values()])
+            return '\n'.join([x.__doc__.split('\n')[0]
+                              for x in self.commands.values()])
 
 
 class ServerProtocol(asyncio.Protocol):

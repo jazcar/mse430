@@ -33,8 +33,8 @@ void speed_controller_tick() {
 	int speed_a_err = speed_a_target - motor_a_rate;
 	int speed_b_err = speed_b_target - motor_b_rate;
 
-	err_a_der = old_a_err - speed_a_err;
-	err_b_der = old_b_err - speed_b_err;
+	err_a_der = speed_a_err - old_a_err;
+	err_b_der = speed_b_err - old_b_err;
 
     old_a_err = speed_a_err;
     old_b_err = speed_b_err;
@@ -63,11 +63,12 @@ void speed_a_set_target(int val) {
         speed_a_target = constrain(val, -max_speed, max_speed);
     else
         speed_a_target = val;
-    controller_on = 1;
 }
 
 void speed_b_set_target(int val) {
 
-    speed_b_target = constrain(val, -max_speed, max_speed);
-    controller_on = 1;
+	if (max_speed > 0)
+		speed_b_target = constrain(val, -max_speed, max_speed);
+	else
+		speed_b_target = val;
 }

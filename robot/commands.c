@@ -51,10 +51,12 @@ void command_event() {
 	case 'P':
 		motor_a_set_power(get_int());
 		motor_b_set_power(get_int());
+		controller_on = 0;
 		break;
 	case 'S':
 		speed_a_set_target(get_int());
 		speed_b_set_target(get_int());
+		controller_on = 1;
 		break;
 	case 'K':
 		key = get_uint();
