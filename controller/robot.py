@@ -31,7 +31,7 @@ class Robot:
                                 self.btcomm.reader.readexactly(4))
                 self.speeds['speed_a'] = speeds[0]
                 self.speeds['speed_b'] = speeds[1]
-                print('{:3d}, {:3d}'.format(speeds[0], speeds[1]))
+                #print('{:3d}, {:3d}'.format(speeds[0], speeds[1]))
             else:
                 print('Robot: Unexpected character {} received'.format(tag))
 

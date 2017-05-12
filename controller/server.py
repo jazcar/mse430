@@ -9,7 +9,7 @@ class Server():
     def __init__(self, robot, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
         self.robot = Robot(robot, self.loop)
-        self.vision = Vision(self.loop)
+        self.vision = Vision(self.loop, int(robot[-1]))
         self.server = None
         self.commands = {
             'objects': self.objects,
@@ -26,7 +26,7 @@ class Server():
     def run(self):
         try:
             self.loop.run_until_complete(self.robot.connect())
-            #asyncio.ensure_future(self.vision.run())
+            asyncio.ensure_future(self.vision.run())
             self.server = self.loop.run_until_complete(
                 self.loop.create_server(lambda: ServerProtocol(self),
                                         port=55555))

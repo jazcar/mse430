@@ -5,7 +5,7 @@ import numpy as np
 
 class Vision:
 
-    def __init__(self, loop, robotid=5, cam=0):
+    def __init__(self, loop, robotid, cam=0):
         self.loop = loop
         self.robotid = robotid
         self.cap = cv2.VideoCapture(cam)
@@ -56,7 +56,7 @@ class Vision:
                 center = np.mean(points, 0)
                 facing = np.mean(points[:2], 0)
                 facing -= center
-                facing /= np.linalg.norm(facing)
+                facing /= -np.linalg.norm(facing)
                 self._robot = [center.tolist(), facing.tolist()]
             else:
                 self._robot = [None, None]
