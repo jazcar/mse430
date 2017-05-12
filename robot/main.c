@@ -46,35 +46,12 @@ int main(void) {
 			// Send speed back to remote
 			message.command.arg_a = motor_a_rate;
 			message.command.arg_b = motor_b_rate;
-			//IOputc('S', uart_tx_buf);
+			IOputc('S', uart_tx_buf);
 			IOnputs(message.bytes, 4, uart_tx_buf);
 
 		} else if (uart_rx_buf->count >= 5) {
 			__enable_interrupt();
-
-			// Process a command from the remote
-			char c;
-			IOgetc(&c, uart_rx_buf);
-			switch (c) {
-			case 'P':
-				IOgetc(&message.bytes[0], uart_rx_buf);
-				IOgetc(&message.bytes[1], uart_rx_buf);
-				IOgetc(&message.bytes[2], uart_rx_buf);
-				IOgetc(&message.bytes[3], uart_rx_buf);
-				motor_a_set_power(message.command.arg_a);
-				motor_b_set_power(message.command.arg_b);
-				break;
-			case 'S':
-				IOgetc(&message.bytes[0], uart_rx_buf);
-				IOgetc(&message.bytes[1], uart_rx_buf);
-				IOgetc(&message.bytes[2], uart_rx_buf);
-				IOgetc(&message.bytes[3], uart_rx_buf);
-				speed_a_set_target(message.command.arg_a);
-				speed_b_set_target(message.command.arg_b);
-				break;
-			default:
-				break;
-			}
+			command_event();
 
 		} else {
 			__bis_SR_register(LPM0_bits | GIE);

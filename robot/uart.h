@@ -12,6 +12,8 @@
 
 // Public function prototypes
 int uart_init();
+int get_int();
+unsigned get_uint();
 
 // IObuffers
 extern IObuffer* const uart_rx_buf;

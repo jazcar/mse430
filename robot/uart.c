@@ -59,3 +59,23 @@ void uart_tx_callback() {
 void uart_rx_callback() {
 	// sys_event |= BIT(CMD_EVENT);	// Signal command event
 }
+
+union intbuf {
+	char bytes[2];
+	unsigned uint16;
+	int int16;
+};
+
+int get_int() {
+	union intbuf buf;
+	IOgetc(&buf.bytes[0], uart_rx_buf);
+	IOgetc(&buf.bytes[1], uart_rx_buf);
+	return buf.int16;
+}
+
+unsigned get_uint() {
+	union intbuf buf;
+	IOgetc(&buf.bytes[0], uart_rx_buf);
+	IOgetc(&buf.bytes[1], uart_rx_buf);
+	return buf.uint16;
+}

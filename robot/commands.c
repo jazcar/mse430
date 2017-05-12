@@ -9,6 +9,7 @@
 #include <msp430.h>
 #include "mse430.h"
 #include "uart.h"
+#include "motor.h"
 #include "speed.h"
 
 extern int k_p, k_i, k_d, int_cap, int_dom, max_speed;	// speed.c
@@ -29,24 +30,39 @@ struct {
 		{ .key_chars[0]='m', .key_chars[1]='s', .data_ptr = &max_speed },
 };
 
-void set_param() {
-	union {
-		char bytes[2];
-		unsigned uint16;
-		int int16;
-	} key, value;
+void set_param(unsigned key, int value) {
 	unsigned dex = NUM_PARAMS;
 
-	IOgetc(&key.bytes[0], uart_rx_buf);
-	IOgetc(&key.bytes[1], uart_rx_buf);
-	IOgetc(&value.bytes[0], uart_rx_buf);
-	IOgetc(&value.bytes[1], uart_rx_buf);
-
 	while (dex-- > 0) {
-		if (key.uint16 == params[dex].key_int) {
-			*params[dex].data_ptr = value.int16;
+		if (key == params[dex].key_int) {
+			*params[dex].data_ptr = value;
 			return;
 		}
 	}
-	// Error
+	// No matching key
+}
+
+void command_event() {
+	char c;
+	IOgetc(&c, uart_rx_buf);
+	switch(c) {
+	unsigned key;
+	int value;
+	case 'P':
+		motor_a_set_power(get_int());
+		motor_b_set_power(get_int());
+		break;
+	case 'S':
+		speed_a_set_target(get_int());
+		speed_b_set_target(get_int());
+		break;
+	case 'K':
+		key = get_uint();
+		value = get_int();
+		set_param(key, value);
+		break;
+	default:
+		//Error
+		break;
+	}
 }
