@@ -40,10 +40,10 @@ int main(void) {
 			    speed_controller_tick();
 
 			// Send speed back to remote
-			message.command.arg_a = motor_a_rate;
-			message.command.arg_b = motor_b_rate;
-			IOputc('S', uart_tx_buf);
-			IOnputs(message.bytes, 4, uart_tx_buf);
+			//message.command.arg_a = (int)motor_a_rate;
+			//message.command.arg_b = (int)motor_b_rate;
+			//IOputc('S', uart_tx_buf);
+			//IOnputs(message.bytes, 4, uart_tx_buf);
 
 		} else if (uart_rx_buf->count >= 5) {
 			__enable_interrupt();

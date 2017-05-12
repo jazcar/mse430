@@ -6,9 +6,9 @@ from vision import Vision
 
 class Server():
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, robot, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
-        self.robot = Robot('MSE430-4', self.loop)
+        self.robot = Robot(robot, self.loop)
         self.vision = Vision(self.loop)
         self.server = None
         self.commands = {
@@ -116,7 +116,7 @@ class ServerProtocol(asyncio.Protocol):
         
     def connection_lost(self, exc):
         print('Connection lost')
-        self.server.stop()
+        self.transport = None
         
     def write(self, data):
         data = str(data)
@@ -145,4 +145,5 @@ class ServerProtocol(asyncio.Protocol):
 
 
 if __name__ == '__main__':
-    Server().run()
+    from sys import argv
+    Server(argv[1]).run()

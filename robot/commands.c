@@ -12,7 +12,7 @@
 #include "motor.h"
 #include "speed.h"
 
-extern int k_p, k_i, k_d, int_cap, int_dom, max_speed;	// speed.c
+extern long k_p, k_i, k_d, int_cap, int_dom, max_speed;	// speed.c
 
 #define NUM_PARAMS 6
 struct {
@@ -20,7 +20,7 @@ struct {
 		char key_chars[2];
 		unsigned key_int;
 	};
-	int* data_ptr;
+	long* data_ptr;
 } params[NUM_PARAMS] = {
 		{ .key_chars[0]='k', .key_chars[1]='p', .data_ptr = &k_p },
 		{ .key_chars[0]='k', .key_chars[1]='i', .data_ptr = &k_i },
@@ -35,7 +35,7 @@ void set_param(unsigned key, int value) {
 
 	while (dex-- > 0) {
 		if (key == params[dex].key_int) {
-			*params[dex].data_ptr = value;
+			*params[dex].data_ptr = (long)value;
 			return;
 		}
 	}

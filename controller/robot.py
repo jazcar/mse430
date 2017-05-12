@@ -8,7 +8,7 @@ class Robot:
         self.name = 'MSE430-' + name.split('-')[-1]
         self.loop = loop
         try:
-            self.addr = ADDRESSES[name]
+            self.addr = ADDRESSES[self.name]
         except KeyError:
             raise ValueError('Unrecognized name: {} interpreted as {}'.format(
                 name, self.name))
@@ -43,7 +43,7 @@ class Robot:
         message = pack('<chh', b'S', speed_a, speed_b)
         self.btcomm.write(message)
 
-    PARAM_SCALES = {'kp': 8, 'ki': 8, 'kd': 8, 'ic': 0, 'id': 0, 'ms': 0}
+    PARAM_SCALES = {'kp': 10, 'ki': 10, 'kd': 10, 'ic': 0, 'id': 0, 'ms': 0}
     
     def set_param(self, name, value):
         if name in self.PARAM_SCALES:

@@ -9,10 +9,10 @@
 #define MOTOR_H_
 
 // Public variables
-extern volatile signed long motor_a_count;
-extern volatile signed long motor_b_count;
-extern volatile int motor_a_rate;
-extern volatile int motor_b_rate;
+extern volatile long motor_a_count;
+extern volatile long motor_b_count;
+extern volatile long motor_a_rate;
+extern volatile long motor_b_rate;
 
 // Public function prototypes
 int motor_init();

@@ -16,14 +16,14 @@
 #define QUAD_DIR_A  (-1)
 #define QUAD_DIR_B  1
 
-const int max_power = 500;
+const int max_power = 512;
 
-volatile signed long motor_a_count = 0;
-volatile signed long motor_b_count = 0;
+volatile long motor_a_count = 0;
+volatile long motor_b_count = 0;
+volatile long motor_a_rate;
+volatile long motor_b_rate;
 volatile char quadrature_a;
 volatile char quadrature_b;
-volatile int motor_a_rate;
-volatile int motor_b_rate;
 
 int motor_init() {
 
@@ -111,8 +111,8 @@ void motor_update_rates() {
     static signed long old_a_count = 0;
     static signed long old_b_count = 0;
 
-    motor_a_rate = (int)(motor_a_count - old_a_count);
-    motor_b_rate = (int)(motor_b_count - old_b_count);
+    motor_a_rate = motor_a_count - old_a_count;
+    motor_b_rate = motor_b_count - old_b_count;
 
     old_a_count = motor_a_count;
     old_b_count = motor_b_count;

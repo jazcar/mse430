@@ -32,6 +32,7 @@ void mse430_init() {
 
 	// Other miscellaneous stuff
 	P1DIR |= RED_LEDS;
+	P1OUT &= ~RED_LEDS;
 #ifdef BUTTON                   // TODO: Fix ISRs so this can work
 	P1REN |= BUTTON_1;
 	P1IE |= BUTTON_1;			// MOTOR_A_HALL_A | MOTOR_A_HALL_B;
@@ -68,7 +69,16 @@ void mse430_clock_init() {
 	IFG1 &= ~OFIFG;						// Clear oscillator interrupt flag
 }
 
-int constrain(int in, int min, int max) {
+int int_constrain(int in, int min, int max) {
+    if (in < min)
+        return min;
+    else if (in > max)
+        return max;
+    else
+        return in;
+}
+
+long long_constrain(long in, long min, long max) {
     if (in < min)
         return min;
     else if (in > max)
