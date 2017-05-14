@@ -5,11 +5,12 @@ import numpy as np
 
 class Vision:
 
-    def __init__(self, loop, robotid, cam=0):
+    def __init__(self, loop, robotid, cam=1):
         self.loop = loop
         self.robotid = robotid
         self.cap = cv2.VideoCapture(cam)
-        self.markers = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        self.markers = cv2.aruco.getPredefinedDictionary(
+            cv2.aruco.DICT_4X4_100)
         self.frametime = 0
         self._objects = {}
 
@@ -42,10 +43,13 @@ class Vision:
         self._obstacles = None
         self._robot = None
 
+    OBSTACLE_START
+
     @property
     def obstacles(self):
         if self._obstacles is None:
-            self._obstacles = {k: v for k, v in self.objects.items() if k > 10}
+            self._obstacles = {k: v for k, v in self.objects.items()
+                               if k > self.OBSTACLE_START}
         return self._obstacles
     
     @property
@@ -56,7 +60,7 @@ class Vision:
                 center = np.mean(points, 0)
                 facing = np.mean(points[:2], 0)
                 facing -= center
-                facing /= -np.linalg.norm(facing)
+                facing /= np.linalg.norm(facing)
                 self._robot = [center.tolist(), facing.tolist()]
             else:
                 self._robot = [None, None]
