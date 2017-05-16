@@ -9,6 +9,8 @@ class Vision:
         self.loop = loop
         self.robotid = robotid
         self.cap = cv2.VideoCapture(cam)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
         self.frametime = 0
@@ -43,13 +45,13 @@ class Vision:
         self._obstacles = None
         self._robot = None
 
-    OBSTACLE_START
+    OBSTACLE_START=20
 
     @property
     def obstacles(self):
         if self._obstacles is None:
             self._obstacles = {k: v for k, v in self.objects.items()
-                               if k > self.OBSTACLE_START}
+                               if k >= self.OBSTACLE_START}
         return self._obstacles
     
     @property
