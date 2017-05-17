@@ -13,6 +13,8 @@ extern volatile long motor_a_count;
 extern volatile long motor_b_count;
 extern volatile long motor_a_rate;
 extern volatile long motor_b_rate;
+extern int motor_a_power;
+extern int motor_b_power;
 
 // Public function prototypes
 int motor_init();

@@ -87,27 +87,6 @@ long long_constrain(long in, long min, long max) {
         return in;
 }
 
-#pragma vector = USCIAB0TX_VECTOR
-__interrupt void USCI_TX_ISR() {
-	if (IFG2 & UCA0TXIFG) {
-		if (uart_tx_buf->count > 0) {			// If byte is available
-			char c;
-			IOgetc(&c, uart_tx_buf);
-			UCA0TXBUF = (unsigned char) c;		// Load next byte
-		} else {								// Otherwise
-			IE2 &= ~UCA0TXIE;					// Shut off interrupt
-		}
-	}
-}
-
-#pragma vector = USCIAB0RX_VECTOR
-__interrupt void USCI_RX_ISR() {
-	if (IFG2 & UCA0RXIFG) {
-		IOputc(UCA0RXBUF, uart_rx_buf);			// Copy into buffer
-	}
-	__bic_SR_register_on_exit(LPM0_bits);
-}
-
 #pragma vector = WDT_VECTOR
 __interrupt void WDT_ISR() {
 	motor_update_rates();

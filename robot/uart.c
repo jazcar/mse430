@@ -60,10 +60,22 @@ void uart_rx_callback() {
 	// sys_event |= BIT(CMD_EVENT);	// Signal command event
 }
 
+// Convenience functions
+
+int bytes_pending() {
+	return uart_rx_buf->count;
+}
+
+char get_char() {
+	char c;
+	IOgetc(&c, uart_rx_buf);
+	return c;
+}
+
 union intbuf {
 	char bytes[2];
+	signed int16;
 	unsigned uint16;
-	int int16;
 };
 
 int get_int() {
@@ -79,3 +91,71 @@ unsigned get_uint() {
 	IOgetc(&buf.bytes[1], uart_rx_buf);
 	return buf.uint16;
 }
+
+union longbuf {
+	char bytes[4];
+	signed long int32;
+	unsigned long uint32;
+};
+
+long get_long() {
+	union longbuf buf;
+	unsigned n;
+	for (n=0; n<4; n++)
+		IOgetc(&buf.bytes[n], uart_rx_buf);
+	return buf.int32;
+}
+
+unsigned long get_ulong() {
+	union longbuf buf;
+	unsigned n;
+	for (n=0; n<4; n++)
+		IOgetc(&buf.bytes[n], uart_rx_buf);
+	return buf.uint32;
+}
+
+void put_char(char c) {
+	IOputc(c, uart_tx_buf);
+}
+
+void put_int(int i) {
+	union intbuf buf;
+	buf.int16 = i;
+	IOnputs(buf.bytes, 2, uart_tx_buf);
+}
+
+void put_uint(unsigned u) {
+	union intbuf buf;
+	buf.uint16 = u;
+	IOnputs(buf.bytes, 2, uart_tx_buf);
+}
+
+void put_long(long x) {
+	union longbuf buf;
+	buf.int32 = x;
+	IOnputs(buf.bytes, 4, uart_tx_buf);
+}
+
+// Interrupt handlers
+
+#pragma vector = USCIAB0TX_VECTOR
+__interrupt void USCI_TX_ISR() {
+	if (IFG2 & UCA0TXIFG) {
+		if (uart_tx_buf->count > 0) {			// If byte is available
+			char c;
+			IOgetc(&c, uart_tx_buf);
+			UCA0TXBUF = (unsigned char) c;		// Load next byte
+		} else {								// Otherwise
+			IE2 &= ~UCA0TXIE;					// Shut off interrupt
+		}
+	}
+}
+
+#pragma vector = USCIAB0RX_VECTOR
+__interrupt void USCI_RX_ISR() {
+	if (IFG2 & UCA0RXIFG) {
+		IOputc(UCA0RXBUF, uart_rx_buf);			// Copy into buffer
+	}
+	__bic_SR_register_on_exit(LPM0_bits);
+}
+

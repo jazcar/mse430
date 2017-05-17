@@ -17,6 +17,8 @@
 #define QUAD_DIR_B  1
 
 const int max_power = 512;
+int motor_a_power = 0;
+int motor_b_power = 0;
 
 volatile long motor_a_count = 0;
 volatile long motor_b_count = 0;
@@ -60,15 +62,18 @@ int motor_init() {
 void motor_a_set_power(int power) {
 
     P2SEL &= ~(MOTOR_A_IN_1 | MOTOR_A_IN_2);
+    motor_a_power = power;
 
     if (power == 0) {
         P2OUT |= MOTOR_A_IN_1 | MOTOR_A_IN_2;
     } else if (power >= max_power) {
         P2OUT |= MOTOR_A_IN_2;      // CCW
         P2OUT &= ~MOTOR_A_IN_1;
+        motor_a_power = max_power;
     } else if (power <= -max_power) {
         P2OUT |= MOTOR_A_IN_1;      // CW
         P2OUT &= ~MOTOR_A_IN_2;
+        motor_a_power = -max_power;
     } else if (power > 0) {
         P2OUT |= MOTOR_A_IN_2;
         P2SEL |= MOTOR_A_IN_1;
@@ -85,15 +90,18 @@ void motor_a_set_power(int power) {
 void motor_b_set_power(int power) {
 
     P2SEL &= ~(MOTOR_B_IN_1 | MOTOR_B_IN_2);
+    motor_b_power = power;
 
     if (power == 0) {
         P2OUT |= MOTOR_B_IN_1 | MOTOR_B_IN_2;
     } else if (power >= max_power) {
         P2OUT |= MOTOR_B_IN_1;      // CW (reverse for robot to go straight)
         P2OUT &= ~MOTOR_B_IN_2;
+        motor_b_power = max_power;
     } else if (power <= -max_power) {
         P2OUT |= MOTOR_B_IN_2;      // CCW
         P2OUT &= ~MOTOR_B_IN_1;
+        motor_b_power = -max_power;
     } else if (power > 0) {
         P2OUT |= MOTOR_B_IN_1;
         P2SEL |= MOTOR_B_IN_2;

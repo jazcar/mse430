@@ -83,8 +83,7 @@ class Server():
         return json.dumps('OK')
 
     def setparam(self, name, value):
-        """
-        setparam name value -- Configure the robot (not implemented)
+        """setparam name value -- Configure the robot (not implemented)
         kp: Proportional term gain
         ki: Integral term gain
         kd: Derivative term gain

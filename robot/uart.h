@@ -12,11 +12,19 @@
 
 // Public function prototypes
 int uart_init();
+
+// Read data
+int bytes_pending();
+char get_char();
 int get_int();
 unsigned get_uint();
+long get_long();
+unsigned long get_ulong();
 
-// IObuffers
-extern IObuffer* const uart_rx_buf;
-extern IObuffer* const uart_tx_buf;
+// Send data
+void put_char(char c);
+void put_int(int i);
+void put_uint(unsigned u);
+void put_long(long x);
 
 #endif /* UART_H_ */
