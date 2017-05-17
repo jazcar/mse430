@@ -5,7 +5,7 @@ import numpy as np
 
 class Vision:
 
-    def __init__(self, loop, robotid, cam=1):
+    def __init__(self, loop, robotid, cam=0):
         self.loop = loop
         self.robotid = robotid
         self.cap = cv2.VideoCapture(cam)

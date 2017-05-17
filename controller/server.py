@@ -9,7 +9,7 @@ class Server():
     def __init__(self, robot, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
         self.robot = Robot(robot, self.loop)
-        self.vision = Vision(self.loop, int(robot[-1]))
+        self.vision = Vision(self.loop, self.robot.num)
         self.server = None
         self.commands = {
             'objects': self.objects,
@@ -18,7 +18,9 @@ class Server():
             'setspeed': self.setspeed,
             'getspeed': self.getspeed,
             'setpower': self.setpower,
+            'getpower': self.getpower,
             'setparam': self.setparam,
+            'getparam': self.getparam,
             'help': self.help,
             '?': self.help
         }
@@ -47,43 +49,63 @@ class Server():
         self.loop.run_until_complete(self.server.wait_closed())
         self.loop.close()
 
-    def objects(self):
+    async def objects(self):
         """objects -- Return positions of all tracked objects in view"""
 
-        return json.dumps({'objects': self.vision.objects})
+        return {'objects': self.vision.objects}
 
-    def getrobot(self):
+    async def getrobot(self):
         """robot -- Return position of the robot"""
 
-        return json.dumps({'robot': self.vision.robot})
+        return {'robot': self.vision.robot}
 
-    def obstacles(self):
+    async def obstacles(self):
         """obstacles -- Return positions of all obstacles in view"""
 
-        return json.dumps({'obstacles': self.vision.obstacles})
+        return {'obstacles': self.vision.obstacles}
 
-    def setspeed(self, speed_a, speed_b):
-        """setspeed speed_a speed_b -- Set motor target speed (?-??)"""
-        
+    async def setspeed(self, speed_a, speed_b):
+        """setspeed speed_a speed_b -- Set motor target speed
+
+        Top speed is somewhere around 80, but there is an artificial
+        limit on the robot so it will go in straight lines at top
+        speed. This value can be changed as the parameter ms.
+        """
         speed_a = int(speed_a)
         speed_b = int(speed_b)
-        self.robot.set_speed(speed_a, speed_b)
-        return json.dumps('OK')
+        await self.robot.set_speed(speed_a, speed_b)
+        return {'res': 'OK'}
 
-    def getspeed(self):
+    async def getspeed(self):
         """getspeed -- Returns current motor speeds"""
-        return json.dumps(self.robot.speeds)
+        speeds = await self.robot.get_speed()
+        return {'speed_a': speeds[0], 'speed_b': speeds[1]}
 
-    def setpower(self, power_a, power_b):
-        """setpower power_a power_b -- Directly set motor power (0-500)"""
-
+    async def setpower(self, power_a, power_b):
+        """setpower power_a power_b -- Directly set motor power
+ 
+        Motor power is (currently) between -512 and 512. Power doesn't
+        correspond direclty with speed.
+        """
         power_a = int(power_a)
         power_b = int(power_b)
-        self.robot.set_power(power_a, power_b)
-        return json.dumps('OK')
+        await self.robot.set_power(power_a, power_b)
+        return {'res': 'OK'}
 
-    def setparam(self, name, value):
-        """setparam name value -- Configure the robot (not implemented)
+    async def getpower(self):
+        """getpower -- Returns the power being applied to the motors
+
+        Motor power is (currently) between -512 and 512. Power doesn't
+        correspond directly with speed, but this might help see what
+        the PID is doing internally.
+        """
+        powers = await self.robot.get_power()
+        return {'power_a': powers[0], 'power_b': powers[1]}
+
+    async def getparam(self, name):
+        """getparam name -- Read a value from the robot
+
+        Parameters:
         kp: Proportional term gain
         ki: Integral term gain
         kd: Derivative term gain
@@ -91,16 +113,44 @@ class Server():
         id: Integral term domain (integral ignored if error > id)
         ms: Max speed
         """
-        self.robot.set_param(name, float(value))
-        return json.dumps('OK')
+        value = await self.robot.get_param(name)
+        return {name: value}
+        
+    async def setparam(self, name, value):
+        """setparam name value -- Configure the robot
 
-    def help(self, command=None):
+        Parameters:
+        kp: Proportional term gain
+        ki: Integral term gain
+        kd: Derivative term gain
+        ic: Integral term cap
+        id: Integral term domain (integral ignored if error > id)
+        ms: Max speed
+        """
+        await self.robot.set_param(name, float(value))
+        return {'res': 'OK'}
+
+    async def help(self, command=None):
         """help | ? [command] -- Display all commands or details of one"""
         if command:
             return self.commands[command.lower()].__doc__
         else:
             return '\n'.join([x.__doc__.split('\n')[0]
                               for x in self.commands.values()])
+
+    async def handle_command(self, data, write): 
+        cmd = data.split()[0].lower()
+        args = data.split()[1:]
+        if cmd in self.commands:
+            try:
+                res = await self.commands[cmd](*args)
+                write(json.dumps(res) if type(res) is dict else res)
+            except Exception as e:
+                write('{} occurred while handling "{}": {}'.format(
+                    type(e).__name__, data, str(e)))
+                raise e
+        else:
+            write('Unknown command: "{}"'.format(cmd))
 
 
 class ServerProtocol(asyncio.Protocol):
@@ -123,22 +173,12 @@ class ServerProtocol(asyncio.Protocol):
         self.transport.write((data+'\n').encode())
 
     def data_received(self, data):
+        data = data.strip().decode()
         if not data:
             return
-        data = data.strip().decode()
         print('Received: {}'.format(data))
-        cmd = data.split()[0].lower()
-        args = data.split()[1:]
-        if cmd in self.server.commands:
-            try:
-                self.write(self.server.commands[cmd](*args))
-            except Exception as e:
-                self.write('{} occurred while handling "{}": {}'.format(
-                    type(e).__name__, data, str(e)))
-                raise e
-        else:
-            self.write('Unknown command: "{}"'.format(cmd))
-            
+        asyncio.ensure_future(self.server.handle_command(data, self.write))
+
     def eof_received(self):
         return False
 

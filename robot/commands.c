@@ -109,7 +109,7 @@ void command_event() {
 	static char command = 0;
 
 	// Get the command tag (skip if re-entering)
-	if (!command)
+	if (command == 0)
 		if (bytes_pending() > 0)
 			command = get_char();
 		else
