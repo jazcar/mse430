@@ -15,14 +15,10 @@ class Server():
             'objects': self.objects,
             'robot': self.getrobot,
             'obstacles': self.obstacles,
-            'setspeed': self.setspeed,
-            'getspeed': self.getspeed,
-            'setpower': self.setpower,
-            'getpower': self.getpower,
-            'setparam': self.setparam,
-            'getparam': self.getparam,
+            'speed': self.speed,
+            'power': self.power,
+            'param': self.param,
             'help': self.help,
-            '?': self.help
         }
         
     def run(self):
@@ -64,79 +60,63 @@ class Server():
 
         return {'obstacles': self.vision.obstacles}
 
-    async def setspeed(self, speed_a, speed_b):
-        """setspeed speed_a speed_b -- Set motor target speed
+    async def speed(self, *args):
+        """speed [speed_a speed_b] -- Get or set motor speed
+
+        With arguments (speed_a and speed_b), this will set targets
+        for the speed controller on the robot. Without arguments it
+        can be used to just check on the actual speed. This command
+        will always return the current speeds of both motors.
 
         Top speed is somewhere around 80, but there is an artificial
         limit on the robot so it will go in straight lines at top
         speed. This value can be changed as the parameter ms.
         """
-        speed_a = int(speed_a)
-        speed_b = int(speed_b)
-        await self.robot.set_speed(speed_a, speed_b)
-        return {'res': 'OK'}
+        if len(args) in [0, 2]:
+            res = await self.robot.speed(tuple(map(int, args)))
+        else:
+            raise TypeError('speed() takes 0 or 2 arguments ({} given)'.format(
+                len(args)))
+        return res
 
-    async def getspeed(self):
-        """getspeed -- Returns current motor speeds"""
-        speeds = await self.robot.get_speed()
-        return {'speed_a': speeds[0], 'speed_b': speeds[1]}
-
-    async def setpower(self, power_a, power_b):
-        """setpower power_a power_b -- Directly set motor power
- 
-        Motor power is (currently) between -512 and 512. Power doesn't
-        correspond direclty with speed.
-        """
-        power_a = int(power_a)
-        power_b = int(power_b)
-        await self.robot.set_power(power_a, power_b)
-        return {'res': 'OK'}
-
-    async def getpower(self):
-        """getpower -- Returns the power being applied to the motors
+    async def power(self, *args):
+        """power [power_a power_b] -- Directly get or set motor power
 
         Motor power is (currently) between -512 and 512. Power doesn't
-        correspond directly with speed, but this might help see what
+        correspond directly with speed, but this might help to see what
         the PID is doing internally.
         """
-        powers = await self.robot.get_power()
-        return {'power_a': powers[0], 'power_b': powers[1]}
+        if len(args) in [0, 2]:
+            res = await self.robot.power(tuple(map(int, args)))
+        else:
+            raise TypeError('power() takes 0 or 2 arguments ({} given)'.format(
+                len(args)))
+        return res
 
-    async def getparam(self, name):
-        """getparam name -- Read a value from the robot
+    async def param(self, name, value=None):
+        """param name [value] -- Get or set controller parameters on robot
 
-        Parameters:
-        kp: Proportional term gain
-        ki: Integral term gain
-        kd: Derivative term gain
-        ic: Integral term cap
-        id: Integral term domain (integral ignored if error > id)
-        ms: Max speed
-        """
-        value = await self.robot.get_param(name)
-        return {name: value}
-        
-    async def setparam(self, name, value):
-        """setparam name value -- Configure the robot
+        If a value is provided, the specified parameter will be set to
+        that value. This command always returns the actual value of
+        the parameter as well. Due to fixed-point encodings, this may
+        sometimes be different than the value passed to it.
 
         Parameters:
         kp: Proportional term gain
         ki: Integral term gain
         kd: Derivative term gain
         ic: Integral term cap
-        id: Integral term domain (integral ignored if error > id)
         ms: Max speed
         """
-        await self.robot.set_param(name, float(value))
-        return {'res': 'OK'}
+        return await self.robot.param(name, value and float(value))
 
     async def help(self, command=None):
-        """help | ? [command] -- Display all commands or details of one"""
+        """help [command] -- Display all commands or show details of one"""
         if command:
             return self.commands[command.lower()].__doc__
         else:
-            return '\n'.join([x.__doc__.split('\n')[0]
-                              for x in self.commands.values()])
+            return '\n'.join([x.__doc__.split('\n')[0] for x in
+                              self.commands.values()])
 
     async def handle_command(self, data, write): 
         cmd = data.split()[0].lower()

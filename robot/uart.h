@@ -14,17 +14,19 @@
 int uart_init();
 
 // Read data
-int bytes_pending();
-char get_char();
-int get_int();
-unsigned get_uint();
-long get_long();
-unsigned long get_ulong();
+void uart_read(char*, unsigned);
+int uart_bytes_pending();
+char uart_get_char();
+int uart_get_int();
+unsigned uart_get_uint();
+long uart_get_long();
+unsigned long uart_get_ulong();
 
 // Send data
-void put_char(char c);
-void put_int(int i);
-void put_uint(unsigned u);
-void put_long(long x);
+void uart_write(char*, unsigned);
+void uart_put_char(char c);
+void uart_put_int(int i);
+void uart_put_uint(unsigned u);
+void uart_put_long(long x);
 
 #endif /* UART_H_ */

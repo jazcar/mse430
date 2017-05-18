@@ -21,70 +21,56 @@ class Robot:
 
     def close(self):
         self.btcomm.close()
-    
-    async def set_power(self, power_a, power_b):
-        message = pack('<chh', b'P', power_a, power_b)
+
+    async def command(self, message):
+        assert len(message) == 5
         self.btcomm.write(message)
-        res = await self.btcomm.reader.readexactly(1)
-        if not res == b'P':
-            raise Exception('Unexpected response to set_power "{}"'.format(
-                res.decode()))
-
-    async def get_power(self):
-        self.btcomm.write(b'p')
         res = await self.btcomm.reader.readexactly(5)
-        tag, power_a, power_b = unpack('<chh', res)
-        if tag == b'p':
-            return power_a, power_b
-        else:
-            raise Exception('Unexpected response to get_power "{}"'.format(
-                tag.decode()))
+        if res[0] != message[0]:
+            raise Exception('Bad response from robot: {}'.format(res.decode()))
+        return res[1:]
+        
+    async def power(self, powers):
+        message = pack('<chh', b'P', *powers) if powers else b'p\0\0\0\0'
+        res = await self.command(message)
+        power_a, power_b = unpack('<hh', res)
+        return {'power_a': power_a, 'power_b': power_b}
 
-    async def set_speed(self, speed_a, speed_b):
-        message = pack('<chh', b'S', speed_a, speed_b)
-        self.btcomm.write(message)
-        res = await self.btcomm.reader.readexactly(1)
-        if not res == b'S':
-            raise Exception('Unexpected response to set_speed "{}"'.format(
-                res.decode()))
+    async def speed(self, speeds):
+        message = pack('<chh', b'S', *speeds) if speeds else b's\0\0\0\0'
+        res = await self.command(message)
+        speed_a, speed_b = unpack('<hh', res)
+        return {'speed_a': speed_a, 'speed_b': speed_b}
 
-    async def get_speed(self):
-        self.btcomm.write(b's')
-        res = await self.btcomm.reader.readexactly(5)
-        tag, speed_a, speed_b = unpack('<chh', res)
-        if tag == b's':
-            return speed_a, speed_b
-        else:
-            raise Exception('Unexpected response to get_speed "{}"'.format(
-                tag.decode()))
+    PARAMS = {'kp': b'K', 'ki': b'I', 'kd': b'D', 'ic': b'C', 'ms': b'M'}
 
-    PARAM_SCALES = {'kp': 10, 'ki': 10, 'kd': 10, 'ic': 0, 'id': 0, 'ms': 0}
-    
-    async def set_param(self, name, value):
-        if name in self.PARAM_SCALES:
-            message = pack('<ccci', b'K', *[c.encode() for c in name],
-                           round(value * (1 << self.PARAM_SCALES[name])))
-            self.btcomm.write(message)
-            res = await self.btcomm.reader.readexactly(1)
-            if not res == b'K':
-                raise Exception('Unexpected response to set_param "{}"'.format(
-                    res.decode()))
-        else:
-            raise ValueError('Invalid parameter name')
+    async def param(self, name, value=None):
+        try:
+            tag = self.PARAMS[name]
+        except KeyError:
+            raise ValueError('Parameter {} not recognized'.format(name))
 
-    async def get_param(self, name):
-        if name in self.PARAM_SCALES:
-            message = pack('<ccc', b'k', *[c.encode() for c in name])
-            self.btcomm.write(message)
-            res = await self.btcomm.reader.readexactly(5)
-            tag, param = unpack('<ci', res)
-            if tag == b'k':
-                return param
-            else:
-                raise Exception('Unexpected response to get_param '
-                                '"{}"'.format(tag.decode()))
+        if value is None:
+            tag = tag.lower()
+        elif 'k' in name:
+            value = float2fixed(value)
         else:
-            raise ValueError('Invalid parameter name')
+            value = int(value)
+
+        message = pack('<ci', tag, value or 0)
+        res = await self.command(message)
+        value, = unpack('<i', res)
+        if 'k' in name:
+            value = fixed2float(value)
+        return {name: value, 'raw': ' '.join([hex(x) for x in res])}
+
+
+def float2fixed(x, bits=10):
+    return round(x * 2**bits)
+
+
+def fixed2float(x, bits=10):
+    return x / 2**bits
 
 
 ADDRESSES = {

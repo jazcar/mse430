@@ -20,7 +20,6 @@ long k_p = _IQ(12.0);
 long k_i = _IQ(0.5);
 long k_d = _IQ(0.0);
 long int_cap = 1000000000;
-long int_dom = 0;
 long max_speed = 64;
 
 void speed_controller_tick() {
@@ -39,7 +38,7 @@ void speed_controller_tick() {
     old_a_err = speed_a_err;
     old_b_err = speed_b_err;
 
-	err_a_int += speed_a_err;
+    err_a_int += speed_a_err;
 	err_b_int += speed_b_err;
 
 	if (int_cap > 0) {

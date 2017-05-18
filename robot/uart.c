@@ -17,8 +17,13 @@ IObuffer* const uart_tx_buf = &_uart_tx_buf;
 char uart_rx_chars[UART_BUF_SIZE];
 char uart_tx_chars[UART_BUF_SIZE];
 
-void uart_rx_callback();
-void uart_tx_callback();
+void uart_tx_callback() {
+	IE2 |= UCA0TXIE;	// Enable TX interrupt (triggers immediately)
+}
+
+void uart_rx_callback() {
+	// sys_event |= BIT(CMD_EVENT);	// Signal command event
+}
 
 int uart_init() {
 
@@ -52,21 +57,24 @@ int uart_init() {
 	return 0;
 }
 
-void uart_tx_callback() {
-	IE2 |= UCA0TXIE;	// Enable TX interrupt (triggers immediately)
-}
-
-void uart_rx_callback() {
-	// sys_event |= BIT(CMD_EVENT);	// Signal command event
-}
 
 // Convenience functions
 
-int bytes_pending() {
+int uart_bytes_pending() {
 	return uart_rx_buf->count;
 }
 
-char get_char() {
+void uart_read(char* buf, unsigned nbytes) {
+	while (nbytes-- > 0)
+		IOgetc(buf++, uart_rx_buf);
+}
+
+void uart_write(char* buf, unsigned nbytes) {
+	IOnputs(buf, (int)nbytes, uart_tx_buf);
+}
+
+
+char uart_get_char() {
 	char c;
 	IOgetc(&c, uart_rx_buf);
 	return c;
@@ -78,14 +86,14 @@ union intbuf {
 	unsigned uint16;
 };
 
-int get_int() {
+int uart_get_int() {
 	union intbuf buf;
 	IOgetc(&buf.bytes[0], uart_rx_buf);
 	IOgetc(&buf.bytes[1], uart_rx_buf);
 	return buf.int16;
 }
 
-unsigned get_uint() {
+unsigned uart_get_uint() {
 	union intbuf buf;
 	IOgetc(&buf.bytes[0], uart_rx_buf);
 	IOgetc(&buf.bytes[1], uart_rx_buf);
@@ -98,7 +106,7 @@ union longbuf {
 	unsigned long uint32;
 };
 
-long get_long() {
+long uart_get_long() {
 	union longbuf buf;
 	unsigned n;
 	for (n=0; n<4; n++)
@@ -106,7 +114,7 @@ long get_long() {
 	return buf.int32;
 }
 
-unsigned long get_ulong() {
+unsigned long uart_get_ulong() {
 	union longbuf buf;
 	unsigned n;
 	for (n=0; n<4; n++)
@@ -114,23 +122,23 @@ unsigned long get_ulong() {
 	return buf.uint32;
 }
 
-void put_char(char c) {
+void uart_put_char(char c) {
 	IOputc(c, uart_tx_buf);
 }
 
-void put_int(int i) {
+void uart_put_int(int i) {
 	union intbuf buf;
 	buf.int16 = i;
 	IOnputs(buf.bytes, 2, uart_tx_buf);
 }
 
-void put_uint(unsigned u) {
+void uart_put_uint(unsigned u) {
 	union intbuf buf;
 	buf.uint16 = u;
 	IOnputs(buf.bytes, 2, uart_tx_buf);
 }
 
-void put_long(long x) {
+void uart_put_long(long x) {
 	union longbuf buf;
 	buf.int32 = x;
 	IOnputs(buf.bytes, 4, uart_tx_buf);
