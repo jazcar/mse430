@@ -65,7 +65,7 @@ class Robot:
         value, = unpack('<i', res)
         if 'k' in name:
             value = fixed2float(value)
-        return {name: value, 'raw': ' '.join([hex(x) for x in res])}
+        return {name: value}
 
 
 def float2fixed(x, bits=10):

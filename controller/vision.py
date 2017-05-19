@@ -9,34 +9,45 @@ class Vision:
         self.loop = loop
         self.robotid = robotid
         self.running = False
+
         self.cap = cv2.VideoCapture(cam)
+        assert self.cap.isOpened()  # Fail if camera not opened
+
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Might reduce latency
+        
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
-        self.frametime = 0
-        self._objects = {}
+        self.objects = {}
 
     async def run(self):
         self.running = True
         cv2.namedWindow("MSE430")
+
         while self.running:
-            res, frame = self.cap.read()
-            self.frametime = self.loop.time()
+            self.cap.grab()
+            self.objects = {'time': self.loop.time()}
+            _, frame = self.cap.retrieve()
+            
             corners, ids, params = cv2.aruco.detectMarkers(frame, self.markers)
-            self.objects = {int(ids[n]): corners[n][0].tolist() for n in
-                             range(len(corners))}
+
+            for n in range(len(corners)):
+                label = 'robot' if int(ids[n]) == self.robotid else int(ids[n])
+                self.objects[label] = self.process_aruco(corners[n][0])
+            
             cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-            point1 = self.robot[0]
-            if point1:
-                point2 = tuple((100 * np.array(self.robot[1]) + point1).astype(
-                    int))
-                point1 = tuple(map(int, point1))
+            if 'robot' in self.objects:
+                point1 = tuple(map(int, self.objects['robot']['center']))
+                point2 = (round(100 * self.objects['robot']['orientation'][0]
+                                + point1[0]),
+                          round(100 * self.objects['robot']['orientation'][1]
+                                + point1[1]))
                 cv2.arrowedLine(frame, point1, point2, (0, 0, 255), 2)
             cv2.imshow("MSE430", frame)
-            if cv2.waitKey(1) == 27:  # Stop on ESC key press
+            if cv2.waitKey(1) == 27:  # Stop on ESC key press (not great)
                 self.loop.stop()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)  # FIXME: probably not accurate?
 
     def stop(self):
         self.running = False
@@ -45,35 +56,11 @@ class Vision:
         cv2.destroyAllWindows()
         self.cap.release()
 
-    @property
-    def objects(self):
-        return self._objects
-
-    @objects.setter
-    def objects(self, value):
-        self._objects = value
-        self._obstacles = None
-        self._robot = None
-
-    OBSTACLE_START=20
-
-    @property
-    def obstacles(self):
-        if self._obstacles is None:
-            self._obstacles = {k: v for k, v in self.objects.items()
-                               if k >= self.OBSTACLE_START}
-        return self._obstacles
-    
-    @property
-    def robot(self):
-        if self._robot is None:
-            if self.robotid in self.objects:
-                points = np.array(self.objects[self.robotid])
-                center = np.mean(points, 0)
-                facing = np.mean(points[:2], 0)
-                facing -= center
-                facing /= np.linalg.norm(facing)
-                self._robot = [center.tolist(), facing.tolist()]
-            else:
-                self._robot = [None, None]
-        return self._robot
+    @staticmethod
+    def process_aruco(corners):
+        center = np.mean(corners, 0)
+        facing = np.mean(corners[:2], 0)
+        facing -= center
+        facing /= np.linalg.norm(facing)
+        return {'corners': corners.tolist(), 'orientation': facing.tolist(),
+                'center': center.tolist()}

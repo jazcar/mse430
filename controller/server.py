@@ -32,8 +32,8 @@ class Server():
                 self.server.sockets[0].getsockname()))
             self.loop.run_forever()
         except KeyboardInterrupt:
-            pass
-        print('\nExiting')
+            print()
+        print('Exiting')
         self.stop()
 
     def stop(self):
@@ -46,15 +46,43 @@ class Server():
         self.robot.close()
         self.loop.close()
 
-    async def where(self):
-        """where -- return the locations of objects tracked by the camera
+    async def where(self, what=None):
+        """where ['robot' | 'others'] -- return locations of tracked objects
         
-        The dictionary of results can be extensive, but it's fairly
-        self-explanatory.
+        The server continually runs a camera and computer vision in
+        the background, looking for the robot and other objects marked
+        with ArUco tags. This command returns the results of this
+        tracking as a dictionary.  The results can be extensive, but
+        it's fairly self-explanatory.
+
+        The command can optionally be followed by either 'robot' or
+        'others' to filter results to either just the robot or all
+        tags that are not the robot. There's no performance gain, this
+        is just a convenience.
+
+        Sometimes, the camera may lose tracking of an object for one
+        reason or another. If that occurs when this command is called,
+        the object won't be in the dictionary, so watch out for
+        that. I would like to fix that, but don't count on it
+        happening too soon.
+
+        Note: For now, the coordinates are simply image coordinates,
+        so the y-axis goes from top to bottom, and the numbers are
+        representative of the image dimensions (nominally
+        1920x1080). This WILL change.
 
         """
 
-        return self.vision.objects
+        if what is None:
+            return self.vision.objects
+        elif what == 'robot':
+            if 'robot' in self.vision.objects:
+                return self.vision.objects['robot']
+            else:
+                return {}
+        elif what == 'others':
+            return {k: v for k, v in self.vision.objects.items() if k!='robot'}
+            
 
     async def speed(self, *args):
         """speed [speed_a speed_b] -- Get or set motor speed
