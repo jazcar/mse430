@@ -8,6 +8,7 @@ class Vision:
     def __init__(self, loop, robotid, cam=0):
         self.loop = loop
         self.robotid = robotid
+        self.running = False
         self.cap = cv2.VideoCapture(cam)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
@@ -17,8 +18,9 @@ class Vision:
         self._objects = {}
 
     async def run(self):
-        cv2.namedWindow("Lookit")
-        while True:
+        self.running = True
+        cv2.namedWindow("MSE430")
+        while self.running:
             res, frame = self.cap.read()
             self.frametime = self.loop.time()
             corners, ids, params = cv2.aruco.detectMarkers(frame, self.markers)
@@ -31,10 +33,18 @@ class Vision:
                     int))
                 point1 = tuple(map(int, point1))
                 cv2.arrowedLine(frame, point1, point2, (0, 0, 255), 2)
-            cv2.imshow("Lookit", frame)
-            cv2.waitKey(1)
+            cv2.imshow("MSE430", frame)
+            if cv2.waitKey(1) == 27:  # Stop on ESC key press
+                self.loop.stop()
             await asyncio.sleep(0.1)
-            
+
+    def stop(self):
+        self.running = False
+
+    def close(self):
+        cv2.destroyAllWindows()
+        self.cap.release()
+
     @property
     def objects(self):
         return self._objects

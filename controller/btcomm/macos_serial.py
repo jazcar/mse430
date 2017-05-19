@@ -29,16 +29,16 @@ class BTComm:
         print('Bluetooth connecting to {}'.format(self.addr))
         filename = self.getport()
         print('Opening {}'.format(filename))
-        for n in range(self.retries):
+        for n in range(self.retries, -1, -1):
             try:
                 self.port = serial.Serial(filename)
-            except OSError as ose:
+            except (OSError, serial.serialutil.SerialException) as se:
                 print('Bluetooth connection failed.', end=' ')
                 if n > 0:
                     print('Retrying... ({} remaining)'.format(n), flush=True)
                 else:
                     print('Aborting', flush=True)
-                    raise ose
+                    raise se
             else:
                 break
         self.loop.add_reader(self.port.fd, lambda: self.reader.feed_data(

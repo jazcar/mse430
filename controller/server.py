@@ -11,20 +11,20 @@ class Server():
         self.robot = Robot(robot, self.loop)
         self.vision = Vision(self.loop, self.robot.num)
         self.server = None
+        self.futures = []
         self.commands = {
-            'objects': self.objects,
-            'robot': self.getrobot,
-            'obstacles': self.obstacles,
+            'where': self.where,
             'speed': self.speed,
             'power': self.power,
             'param': self.param,
+            'shutdown': self.shutdown,
             'help': self.help,
         }
         
     def run(self):
         try:
             self.loop.run_until_complete(self.robot.connect())
-            asyncio.ensure_future(self.vision.run())
+            self.futures.append(asyncio.ensure_future(self.vision.run()))
             self.server = self.loop.run_until_complete(
                 self.loop.create_server(lambda: ServerProtocol(self),
                                         port=55555))
@@ -33,32 +33,28 @@ class Server():
             self.loop.run_forever()
         except KeyboardInterrupt:
             pass
-        print('Exiting')
-        self.close()  # Should this be here?
+        print('\nExiting')
+        self.stop()
 
     def stop(self):
-        self.loop.stop()
-
-    def close(self):
-        self.robot.close()
+        self.robot.stop()
+        self.vision.stop()
+        self.loop.run_until_complete(self.futures[0])
         self.server.close()
         self.loop.run_until_complete(self.server.wait_closed())
+        self.loop.stop()
+        self.robot.close()
         self.loop.close()
 
-    async def objects(self):
-        """objects -- Return positions of all tracked objects in view"""
+    async def where(self):
+        """where -- return the locations of objects tracked by the camera
+        
+        The dictionary of results can be extensive, but it's fairly
+        self-explanatory.
 
-        return {'objects': self.vision.objects}
+        """
 
-    async def getrobot(self):
-        """robot -- Return position of the robot"""
-
-        return {'robot': self.vision.robot}
-
-    async def obstacles(self):
-        """obstacles -- Return positions of all obstacles in view"""
-
-        return {'obstacles': self.vision.obstacles}
+        return self.vision.objects
 
     async def speed(self, *args):
         """speed [speed_a speed_b] -- Get or set motor speed
@@ -71,6 +67,7 @@ class Server():
         Top speed is somewhere around 80, but there is an artificial
         limit on the robot so it will go in straight lines at top
         speed. This value can be changed as the parameter ms.
+
         """
         if len(args) in [0, 2]:
             res = await self.robot.speed(tuple(map(int, args)))
@@ -83,8 +80,9 @@ class Server():
         """power [power_a power_b] -- Directly get or set motor power
 
         Motor power is (currently) between -512 and 512. Power doesn't
-        correspond directly with speed, but this might help to see what
-        the PID is doing internally.
+        correspond directly with speed, but this might help to see
+        what the PID is doing internally.
+
         """
         if len(args) in [0, 2]:
             res = await self.robot.power(tuple(map(int, args)))
@@ -107,6 +105,7 @@ class Server():
         kd: Derivative term gain
         ic: Integral term cap
         ms: Max speed
+
         """
         return await self.robot.param(name, value and float(value))
 
@@ -118,6 +117,16 @@ class Server():
             return '\n'.join([x.__doc__.split('\n')[0] for x in
                               self.commands.values()])
 
+    async def shutdown(self):
+        """shutdown -- Shutdown the server
+
+        The server will keep running after a client disconnects, but
+        this command will shut it down.
+
+        """
+        self.loop.call_soon(self.loop.stop)
+        return 'Shutting down'
+        
     async def handle_command(self, data, write): 
         cmd = data.split()[0].lower()
         args = data.split()[1:]

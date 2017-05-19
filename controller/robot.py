@@ -19,6 +19,9 @@ class Robot:
     async def connect(self):
         self.btcomm.connect()
 
+    def stop(self):
+        self.loop.run_until_complete(self.power((0, 0)))
+
     def close(self):
         self.btcomm.close()
 
