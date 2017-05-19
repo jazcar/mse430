@@ -39,7 +39,7 @@ class Server():
     def stop(self):
         self.robot.stop()
         self.vision.stop()
-        self.loop.run_until_complete(self.futures[0])
+        self.loop.run_until_complete(self.futures[0])  # Not quite
         self.server.close()
         self.loop.run_until_complete(self.server.wait_closed())
         self.loop.stop()
@@ -182,7 +182,7 @@ class ServerProtocol(asyncio.Protocol):
         
     def connection_lost(self, exc):
         print('Connection lost')
-        self.transport = None
+        self.transport = None  # Do I need to close it myself?
         
     def write(self, data):
         data = str(data)
