@@ -15,7 +15,8 @@ class Vision:
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Might reduce latency
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+        self.cap.set(cv2.CAP_PROP_FOCUS, 0)
         
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
