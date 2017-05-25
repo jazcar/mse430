@@ -1,13 +1,12 @@
 import asyncio
 import json
-from math import atan2
+from math import atan2, pi
 from time import sleep
 
 
-def main(host='localhost', port=55555):
-    """This example just tries to turn the robot until it is facing up in
-    the image. First we'll get an angle that represents what we want
-    as a target.
+def main(host='localhost', port=55555, marker='50'):
+    """This example is just for fun. Using a secondary marker, we can
+    drive the robot like an RC car.
 
     """
     
@@ -47,35 +46,33 @@ def main(host='localhost', port=55555):
     def calc_angle(x, y):
         return atan2(-y, x)  # Reversed for upside-down y
 
-    target_angle = calc_angle(0, -1)
+    def distance(a, b):
+        return sum(map(lambda x: x*x, map(lambda y: y[1]-y[0], zip(a,b))))**0.5
+
     lost_count = 0
-    
+
     # Running loop
     try:
         while True:
-            # Get the position of the robot. The result should be a
-            # dictionary with four corners, a center, an orientation
-            # vector, and a timestamp that isn't very useful yet.
-            res = do('where robot')
+            # Get the parameters 
+            res = do('where others')
 
             # Check that the operation succeeded before proceeding
-            if 'orientation' in res:
+            if marker in res:
                 lost_count = 0
-                angle = calc_angle(*res['orientation'])
 
-                # Calculate an error in the angle, which gives a
-                # direction (sign) to turn and also an idea of what
-                # speed to go (the magnitude). Note that this is the
-                # same as the P term in a PID controller. A PD or PID
-                # controller would do even better (hint hint).
-                error = target_angle - angle
-                do('speed {} {}'.format(round(-5*error), round(5*error)))
+                # Extract info about the marker
+                angle = calc_angle(*res[marker]['orientation']) - 0.5*pi
+                corners = res[marker]['corners']
+                tilt = (distance(corners[3], corners[2]) /
+                        distance(corners[1], corners[0])) - 1
+
+                # Use it to control the robot
+                turn = 5 * angle
+                drive = 150 * tilt
+                do('speed {} {}'.format(round(drive-turn), round(drive+turn)))
+
             else:
-                # Sometimes the camera fails to find the robot, and it
-                # will return a mostly empty response. I handle this
-                # by trying a number of times, and if it fails too
-                # much, stopping the robot (in case its movement is
-                # blurring the image).
                 lost_count += 1
                 if lost_count == 10:
                     do('speed 0 0')

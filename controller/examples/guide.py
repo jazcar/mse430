@@ -52,6 +52,7 @@ def main(host='localhost', port=55555):
 
     angle_target = calc_angle(0, -1)
     position_target = 1080 / 2
+    lost_count = 0
 
     # Running loop
     try:
@@ -95,6 +96,7 @@ def main(host='localhost', port=55555):
                 lost_count += 1
                 if lost_count == 10:
                     do('speed 0 0')
+                sleep(0.05)
 
     # Stop with ^C
     except KeyboardInterrupt:
