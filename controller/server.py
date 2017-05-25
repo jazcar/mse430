@@ -8,9 +8,10 @@ class Server():
 
     def __init__(self, robot, *args, **kwargs):
         self.loop = asyncio.get_event_loop()
-        self.robot = Robot(robot, self.loop)
-        self.vision = Vision(self.loop, self.robot.num)
+        self.robot = Robot(robot, self.loop, **kwargs)
+        self.vision = Vision(self.loop, self.robot.num, **kwargs)
         self.server = None
+        self.port = kwargs['port'] or 55555
         self.futures = []
         self.commands = {
             'where': self.where,
@@ -27,7 +28,7 @@ class Server():
             self.futures.append(asyncio.ensure_future(self.vision.run()))
             self.server = self.loop.run_until_complete(
                 self.loop.create_server(lambda: ServerProtocol(self),
-                                        port=55555))
+                                        port=self.port))
             print('Serving on {}'.format(
                 self.server.sockets[0].getsockname()))
             self.loop.run_forever()
@@ -200,5 +201,15 @@ class ServerProtocol(asyncio.Protocol):
 
 
 if __name__ == '__main__':
-    from sys import argv
-    Server(argv[1]).run()
+    import argparse
+    parser = argparse.ArgumentParser(description='MSE430 robot server '
+                                     'for CS 470')
+    parser.add_argument('robot', help='Name or number of the robot to control')
+    parser.add_argument('--port', type=int)
+    parser.add_argument('--cam', default='0', help='Path or number of camera')
+    parser.add_argument('--focus', default='0.0', help='Desired behavior '
+                        'for camera focus, either \'auto\' or a number '
+                        'representing the desired value (defaults to 0)')
+    args = parser.parse_args()
+
+    Server(**vars(args)).run()

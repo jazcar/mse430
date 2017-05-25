@@ -5,19 +5,22 @@ import numpy as np
 
 class Vision:
 
-    def __init__(self, loop, robotid, cam=0):
+    def __init__(self, loop, robotid, cam=0, focus=0, **kwargs):
         self.loop = loop
         self.robotid = robotid
         self.running = False
 
-        self.cap = cv2.VideoCapture(cam)
+        self.cap = cv2.VideoCapture(int(cam) if cam.isnumeric() else cam)
         assert self.cap.isOpened()  # Fail if camera not opened
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-        self.cap.set(cv2.CAP_PROP_FOCUS, 0)
-        
+
+        if focus !='auto':
+            self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+            self.cap.set(cv2.CAP_PROP_FOCUS, float(focus))
+            print('Set focus to {}'.format(float(focus)))
+
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
         self.objects = {}

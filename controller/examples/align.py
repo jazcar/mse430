@@ -62,7 +62,8 @@ def main(host='localhost', port=55555):
                 # Calculate an error in the angle, which gives a
                 # direction (sign) to turn and also an idea of what
                 # speed to go (the magnitude). Note that this is the
-                # same as the P term in a PID controller.
+                # same as the P term in a PID controller. A PD or PID
+                # controller would do even better (hint hint).
                 error = target_angle - angle
                 do('speed {} {}'.format(round(-5*error), round(5*error)))
             else:
@@ -79,7 +80,8 @@ def main(host='localhost', port=55555):
     except KeyboardInterrupt:
         print('\nStopping')
 
-    # Close the connection
+    # Close the connection (wait for the last command to return)
+    loop.run_until_complete(asyncio.sleep(1.0))
     writer.close()
     loop.close()
 

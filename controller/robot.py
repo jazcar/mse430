@@ -4,7 +4,7 @@ from btcomm import BTComm
 
 
 class Robot:
-    def __init__(self, name, loop):
+    def __init__(self, name, loop, **kwargs):
         self.name = 'MSE430-' + name.split('-')[-1]
         self.loop = loop
         self.num = (lambda x: int(x) if x.isnumeric()
