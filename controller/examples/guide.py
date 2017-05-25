@@ -1,6 +1,6 @@
 import asyncio
 import json
-from math import atan2, cos
+from math import atan2, cos, pi
 from time import sleep
 
 
@@ -47,6 +47,12 @@ def main(host='localhost', port=55555):
     def calc_angle(x, y):
         return atan2(-y, x)  # Reversed for upside-down y
 
+    # Sometimes, when taking differences between angles, you end up
+    # with something out of usable range. This fixes that by
+    # constraining x to be between +/- pi.
+    def normalize_angle(x):
+        return ((x + 3*pi) % (2*pi)) - pi
+
     def dot_product(a, b):
         return sum(map(lambda x: x[0]*x[1], zip(a, b)))
 
@@ -72,7 +78,7 @@ def main(host='localhost', port=55555):
                 # speed to go (the magnitude). Note that this is the
                 # same as the P term in a PID controller. A PD or PID
                 # controller would do even better (hint hint).
-                angle_error = angle_target - angle
+                angle_error = normalize_angle(angle_target - angle)
 
                 # Also calculate an error in the position; we want it
                 # to be in the center of the image (on a centered

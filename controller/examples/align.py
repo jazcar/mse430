@@ -1,6 +1,6 @@
 import asyncio
 import json
-from math import atan2
+from math import atan2, pi
 from time import sleep
 
 
@@ -47,6 +47,13 @@ def main(host='localhost', port=55555):
     def calc_angle(x, y):
         return atan2(-y, x)  # Reversed for upside-down y
 
+
+    # Sometimes, when taking differences between angles, you end up
+    # with something out of usable range. This fixes that by
+    # constraining x to be between +/- pi.
+    def normalize_angle(x):
+        return ((x + 3*pi) % (2*pi)) - pi
+    
     target_angle = calc_angle(0, -1)
     lost_count = 0
     
@@ -68,7 +75,9 @@ def main(host='localhost', port=55555):
                 # speed to go (the magnitude). Note that this is the
                 # same as the P term in a PID controller. A PD or PID
                 # controller would do even better (hint hint).
-                error = target_angle - angle
+                error = normalize_angle(target_angle - angle)
+
+                
                 do('speed {} {}'.format(round(-5*error), round(5*error)))
             else:
                 # Sometimes the camera fails to find the robot, and it
