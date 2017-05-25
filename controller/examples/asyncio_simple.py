@@ -13,15 +13,28 @@ def main(host, port):
     # method so reader and writer are in its namespace
     def do(command):
         print('>>>', command)
+
+        # Send the command -- write() expect bytes, so we call encode()
         writer.write(command.strip().encode())
+
+        # This is a lot in one line, but here's what's happening:
+        #   reader.readline() starts an asyncio coroutine that reads
+        #     until it gets a complete line (ending with \n) and then
+        #     returns that coroutine.
+        #   run_until_complete() runs the coroutine until it terminates
+        #   decode() turns the bytes object into a string
+        #   strip() removes whitespace at the beginning or end, like \n
         res = loop.run_until_complete(reader.readline()).decode().strip()
         print('<<<', res)
         try:
+            # The response is a json encoded string, so we decode it
             res = json.loads(res)
         except json.decoder.JSONDecodeError:
+            # If an error occurred, handle it gracefully
             print('Error decoding response')
-            res = None
+            res = {}
         print()
+        # Return the resulting dict
         return res
 
     # Spin around
