@@ -1,16 +1,16 @@
 import asyncio
 import json
-from math import atan2
+from math import atan2, cos
 from time import sleep
 
 
 def main(host='localhost', port=55555):
-    """This example just tries to turn the robot until it is facing up in
-    the image. First we'll get an angle that represents what we want
-    as a target.
+    """In this example, I direct the robot to orient itself "up" as in
+    align.py, and also to drive to the center line of the image.  With a
+    steady hand, you can guide it along with the camera.
 
     """
-    
+
     # Setup asyncio and open the connection
     loop = asyncio.get_event_loop()
     reader, writer = loop.run_until_complete(
@@ -47,7 +47,11 @@ def main(host='localhost', port=55555):
     def calc_angle(x, y):
         return atan2(-y, x)  # Reversed for upside-down y
 
-    target_angle = calc_angle(0, -1)
+    def dot_product(a, b):
+        return sum(map(lambda x: x[0]*x[1], zip(a, b)))
+
+    angle_target = calc_angle(0, -1)
+    position_target = 1080 / 2
 
     # Running loop
     try:
@@ -67,8 +71,21 @@ def main(host='localhost', port=55555):
                 # speed to go (the magnitude). Note that this is the
                 # same as the P term in a PID controller. A PD or PID
                 # controller would do even better (hint hint).
-                error = target_angle - angle
-                do('speed {} {}'.format(round(-5*error), round(5*error)))
+                angle_error = angle_target - angle
+
+                # Also calculate an error in the position; we want it
+                # to be in the center of the image (on a centered
+                # horizontal line). I compensate for the reversed
+                # coordinates by negating the result.
+                position_error = -(position_target - res['center'][1])
+
+                # These two errors tell us how much we want to turn
+                # and how much we want to move. We can use both of
+                # these at the same time if we're clever.
+                turn = 5 * angle_error
+                drive = 0.05 * cos(angle_error) * position_error
+                do('speed {} {}'.format(round(drive-turn), round(drive+turn)))
+
             else:
                 # Sometimes the camera fails to find the robot, and it
                 # will return a mostly empty response. I handle this
