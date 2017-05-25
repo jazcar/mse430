@@ -176,9 +176,8 @@ class ServerProtocol(asyncio.Protocol):
         self.transport = None
         
     def connection_made(self, transport):
-        self.transport = transport
         print('Connection made')
-        self.write('MSE430 Server (CS 470 BYU)')
+        self.transport = transport
         
     def connection_lost(self, exc):
         print('Connection lost')
