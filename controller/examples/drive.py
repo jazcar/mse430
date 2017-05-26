@@ -46,6 +46,9 @@ def main(host='localhost', port=55555, marker='50'):
     def calc_angle(x, y):
         return atan2(-y, x)  # Reversed for upside-down y
 
+    def normalize_angle(x):
+        return ((x + 3*pi) % (2*pi)) - pi
+    
     def distance(a, b):
         return sum(map(lambda x: x*x, map(lambda y: y[1]-y[0], zip(a,b))))**0.5
 
@@ -62,7 +65,8 @@ def main(host='localhost', port=55555, marker='50'):
                 lost_count = 0
 
                 # Extract info about the marker
-                angle = calc_angle(*res[marker]['orientation']) - 0.5*pi
+                angle = normalize_angle(calc_angle(
+                    *res[marker]['orientation']) - 0.5*pi)
                 corners = res[marker]['corners']
                 tilt = (distance(corners[3], corners[2]) /
                         distance(corners[1], corners[0])) - 1
