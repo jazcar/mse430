@@ -28,7 +28,7 @@ void mse430_init() {
 	// pid_init();
 	// accel_init();
 
-	__enable_interrupt();
+	__enable_interrupt();		// Should this be sooner?
 
 	// Other miscellaneous stuff
 	P1DIR |= RED_LEDS;

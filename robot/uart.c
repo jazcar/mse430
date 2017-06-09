@@ -29,7 +29,7 @@ int uart_init() {
 
 	// Create IObuffers (probably quite oversized)
 	IObuffer_init(uart_rx_buf, (char*) &uart_rx_chars,
-	              UART_BUF_SIZE, uart_rx_callback);
+	              UART_BUF_SIZE, 0); // uart_rx_callback);
 	uart_rx_buf->callback_once = 0;
 	IObuffer_init(uart_tx_buf, (char*) &uart_tx_chars,
 	              UART_BUF_SIZE, uart_tx_callback);
