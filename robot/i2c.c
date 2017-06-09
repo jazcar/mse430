@@ -22,9 +22,8 @@
 static volatile char* i2c_data = 0;
 static volatile struct {
 	unsigned dir :1;					// 1 for write, 0 for read
-	unsigned reg :1;					// Flag to write register before read
 	unsigned err :1;					// Flag to signal that error occurred
-	unsigned cnt :12;                    // Byte count
+	unsigned cnt :8;                    // Byte count
 } i2c_status = { 0 };
 
 // Initialize hardward i2c
@@ -65,7 +64,7 @@ int i2c_write(unsigned address, signed reg, unsigned count, char* buffer) {
 		return -1;
 
 	// Set state for interrupt
-	i2c_data = data;
+	i2c_data = buffer;
 	i2c_status.dir = I2C_DIR_WRITE;
 	i2c_status.cnt = count;
 
@@ -94,6 +93,10 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 	if (!UCB0CTL1 & UCSWRST)
 		return -1;
 
+	// Error if buffer is null or count is zero
+	if (!count || !buffer)
+		return -1;
+
 	// Set state for interrupt
 	i2c_data = buffer;
 	i2c_status.dir = I2C_DIR_READ;
@@ -101,13 +104,35 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 
 	UCB0I2CSA = address;
 
+	// Start, send register address if appropriate
 	if (reg >= 0) {
 		UCB0CTL1 = UCSSEL_3 | UCTR | UCTXSTT;
 		// TODO: Does there need to be a wait here?
 		UCB0TXBUF = reg;
+	} else {
+		UCB0CTL1 = UCSSEL_3 | UCTXSTT;
+	}
 
+	// Enable interrupts (also enable TX in for register case)
+	IE2 |= UCB0TXIE | UCB0RXIE;
+	UCB0I2CIE |= UCNACKIE | UCSTPIE;
 
-	return 0;
+	// If only one byte desired, we have to poll UCTXSTT until address is done
+	if (count == 1) {
+		while (UCB0CTL1 & UCTXSTT);
+		UCB0CTL1 |= UCTXSTP;
+	}
+
+	// Wait until completed
+	do
+		LPM0;
+	while (UCB0STAT & UCBBUSY);
+
+	// Reset USCI_B0 for next operation
+	UCB0CTL1 = UCSSEL_3 | UCSWRST;
+
+	// Return error if there was a NACK
+	return i2c_status.err ? (i2c_status.err = 0, -1) : 0;
 }
 
 // Interrupt service routines
@@ -129,15 +154,13 @@ inline void USCI_B0_I2C_TX_RX_ISR() {
 				UCB0CTL1 |= UCTXSTP;		// transmit the stop condition, and
 				IE2 &= ~UCB0TXIE;			// disable the TX interrupt to end.
 			}
-		} else {
-			if (i2c_status.reg) {			// If register write before read,
-				UCB0TXBUF = *i2c_data;		// write the register address, and
-				i2c_status.reg = 0;			// clear the flag.
-			} else {						// But come back again, clear UCTR
-				UCB0CTL1 = UCSSEL_3 | UCTXSTT;	// and send the repeated start.
-			}
+		} else {							// Writing in read mode, register
+			UCB0CTL1 = UCSSEL_3 | UCTXSTT;	// sent. Repeat start, clear UCTR.
 		}
 	} else if (IFG2 & UCB0RXIFG) {			// Begin RX interrupt service.
-		*i2c_data++ = UCB0RXBUF;			// Copy in the data
+		*i2c_data++ = UCB0RXBUF;			// Copy in the data.
+		if (--i2c_status.cnt == 1) {		// If one byte left, signal stop
+			UCB0CTL1 |= UCTXSTP;
+		}
 	}
 }
