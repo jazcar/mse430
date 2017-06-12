@@ -146,6 +146,7 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 inline void USCI_B0_I2C_STATUS_ISR() {
 	if (UCB0STAT & UCNACKIFG) {			// If NACK detected
 		UCB0CTL1 |= UCTXSTP;			// Send stop condition
+		UCB0STAT &= ~UCNACKIFG;			// Lower interrupt flag
 		i2c_status.err = 1;				// Set error flag
 		IE2 &= ~UCB0TXIE;				// Disable interrupts (TODO: more)
 	}
