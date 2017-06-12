@@ -29,4 +29,8 @@ void uart_put_int(int i);
 void uart_put_uint(unsigned u);
 void uart_put_long(long x);
 
+// ISRs
+inline void USCI_A0_UART_RX_ISR();
+inline void USCI_A0_UART_TX_ISR();
+
 #endif /* UART_H_ */

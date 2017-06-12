@@ -26,7 +26,7 @@ static volatile struct {
 	unsigned cnt :8;                    // Byte count
 } i2c_status = { 0 };
 
-// Initialize hardward i2c
+// Initialize hardware i2c
 int i2c_init() {
 
 	UCB0CTL1 |= UCSWRST;					// Reset, just in case
@@ -71,6 +71,12 @@ int i2c_write(unsigned address, signed reg, unsigned count, char* buffer) {
 	// Configure USCIB0
 	UCB0I2CSA = address;
 	UCB0CTL1 = UCSSEL_3 | UCTR | UCTXSTT;	// Start write
+
+	// Send register
+	if (reg >= 0)
+		UCB0TXBUF = reg;
+
+	// Interrupts
 	IE2 |= UCB0TXIE;						// Enable data interrupt
 	UCB0I2CIE |= UCNACKIE | UCSTPIE;		// Enable NACK and stop interrupts
 
@@ -114,12 +120,13 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 	}
 
 	// Enable interrupts (also enable TX in for register case)
-	IE2 |= UCB0TXIE | UCB0RXIE;
+	IE2 |= UCB0RXIE | (reg >= 0 ? UCB0TXIE : 0);
 	UCB0I2CIE |= UCNACKIE | UCSTPIE;
 
 	// If only one byte desired, we have to poll UCTXSTT until address is done
 	if (count == 1) {
-		while (UCB0CTL1 & UCTXSTT);
+		while (UCB0CTL1 & UCTXSTT)
+			;
 		UCB0CTL1 |= UCTXSTP;
 	}
 
@@ -136,11 +143,11 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 }
 
 // Interrupt service routines
-inline void USCI_B0_I2C_status_ISR() {
+inline void USCI_B0_I2C_STATUS_ISR() {
 	if (UCB0STAT & UCNACKIFG) {			// If NACK detected
 		UCB0CTL1 |= UCTXSTP;			// Send stop condition
 		i2c_status.err = 1;				// Set error flag
-		// TODO: set count to 0 or disable TX/RX?
+		IE2 &= ~UCB0TXIE;				// Disable interrupts (TODO: more)
 	}
 }
 

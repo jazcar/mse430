@@ -16,5 +16,6 @@ extern volatile unsigned long ticks;
 void mse430_init();
 int int_constrain(int, int, int);
 long long_constrain(long, long, long);
+void wait_ticks(unsigned);
 
 #endif /* MSE430_H_ */

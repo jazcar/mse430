@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "motor.h"
 #include "speed.h"
+#include "accelerometer.h"
 
 extern long k_p, k_i, k_d, int_cap, max_speed;	// speed.c
 
@@ -84,6 +85,14 @@ void command_event() {
 		break;
 	case 'm':							// Get max_speed
 		data.int32 = max_speed;
+		break;
+
+	case 'a':							// Get acceleration
+		accelerometer_raw_accel_xy(data.bytes);
+		break;
+
+	case 'g':							// Get rotation
+		accelerometer_raw_gyro_xy(data.bytes);
 		break;
 
 	default:							// Bad Command

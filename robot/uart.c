@@ -145,9 +145,13 @@ void uart_put_long(long x) {
 }
 
 // Interrupt handlers
+inline void USCI_A0_UART_RX_ISR() {
+	if (IFG2 & UCA0RXIFG) {
+		IOputc(UCA0RXBUF, uart_rx_buf);			// Copy into buffer
+	}
+}
 
-#pragma vector = USCIAB0TX_VECTOR
-__interrupt void USCI_TX_ISR() {
+inline void USCI_A0_UART_TX_ISR() {
 	if (IFG2 & UCA0TXIFG) {
 		if (uart_tx_buf->count > 0) {			// If byte is available
 			char c;
@@ -158,12 +162,3 @@ __interrupt void USCI_TX_ISR() {
 		}
 	}
 }
-
-#pragma vector = USCIAB0RX_VECTOR
-__interrupt void USCI_RX_ISR() {
-	if (IFG2 & UCA0RXIFG) {
-		IOputc(UCA0RXBUF, uart_rx_buf);			// Copy into buffer
-	}
-	__bic_SR_register_on_exit(LPM0_bits);
-}
-

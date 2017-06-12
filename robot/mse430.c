@@ -9,6 +9,7 @@
 #include <msp430.h> 
 #include "pins.h"
 #include "uart.h"
+#include "i2c.h"
 #include "motor.h"
 
 // Public variables
@@ -23,12 +24,13 @@ void mse430_init() {
 
 	// Initialize modules
 	mse430_clock_init();
+	__enable_interrupt();
 	uart_init();
+	i2c_init();
 	motor_init();
 	// pid_init();
 	// accel_init();
 
-	__enable_interrupt();		// Should this be sooner?
 
 	// Other miscellaneous stuff
 	P1DIR |= RED_LEDS;
@@ -87,10 +89,31 @@ long long_constrain(long in, long min, long max) {
         return in;
 }
 
+void wait_ticks(unsigned delay_ticks) {
+	unsigned long target_ticks = ticks + (unsigned long) delay_ticks;
+	while (ticks < target_ticks)
+		LPM0;
+}
+
+
 #pragma vector = WDT_VECTOR
 __interrupt void WDT_ISR() {
 	motor_update_rates();
 	tick_flag = 1;
 	ticks++;
     __bic_SR_register_on_exit(LPM0_bits);
+}
+
+#pragma vector = USCIAB0RX_VECTOR
+__interrupt void USCIAB0RX_ISR() {
+	USCI_A0_UART_RX_ISR();
+	USCI_B0_I2C_STATUS_ISR();
+	__bic_SR_register_on_exit(LPM0_bits);
+}
+
+#pragma vector = USCIAB0TX_VECTOR
+__interrupt void USCIAB0TX_ISR() {
+	USCI_A0_UART_TX_ISR();
+	USCI_B0_I2C_TX_RX_ISR();
+	__bic_SR_register_on_exit(LPM0_bits);
 }

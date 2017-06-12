@@ -18,10 +18,11 @@ class Server():
             'speed': self.speed,
             'power': self.power,
             'param': self.param,
+            'accel': self.accel,
             'shutdown': self.shutdown,
             'help': self.help,
         }
-        
+
     def run(self):
         try:
             self.loop.run_until_complete(self.robot.connect())
@@ -83,7 +84,7 @@ class Server():
                 return {}
         elif what == 'others':
             return {k: v for k, v in self.vision.objects.items() if k!='robot'}
-            
+
 
     async def speed(self, *args):
         """speed [speed_a speed_b] -- Get or set motor speed
@@ -138,6 +139,40 @@ class Server():
         """
         return await self.robot.param(name, value and float(value))
 
+    async def accel(self, arg=None):
+        """accel ['linear' | 'gyro'] -- Get accelerometer values from robot
+
+        Returns the accelerometer measurements (currently just raw
+        values in the xy plane). The x-axis points to the front of the
+        robot, and the y-axis points along the left.
+
+        Linear acceleration is represented as 'accel_x' and accel_y'
+        in the returned dictionary. Raw values range from -32768 to
+        32767, with 2048 nominally representing 1g. There is a nonzero
+        offset (needs calibration).
+
+        Rotational velocity is represented as 'gyro_x' and 'gyro_y' in
+        the returned dictionary. Raw values range from -32768 to
+        32767, mapping the range from -2000 to +2000 degrees per
+        second. The signs and axes are determined by the right-hand
+        rule.
+
+        If either 'linear' or 'gyro' is included, only that
+        measurement is returned (still x and y). This does reduce the
+        number of calls made to the robot, so it is more efficient.
+
+        """
+        res = {}
+        if not arg or arg=='linear':
+            res.update(await self.robot.accel())
+        if not arg or arg=='gyro':
+            res.update(await self.robot.gyro())
+        if not res:
+            raise ValueError('Invalid argument {} for command accel'.format(
+                arg))
+        else:
+            return res
+    
     async def help(self, command=None):
         """help [command] -- Display all commands or show details of one"""
         if command:

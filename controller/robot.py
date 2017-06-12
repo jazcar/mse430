@@ -45,6 +45,18 @@ class Robot:
         speed_a, speed_b = unpack('<hh', res)
         return {'speed_a': speed_a, 'speed_b': speed_b}
 
+    async def accel(self):
+        message = pack('<chh', b'a', 0, 0)
+        res = await self.command(message)
+        accel_x, accel_y = unpack('>hh', res)
+        return {'accel_x': accel_x, 'accel_y': accel_y}
+
+    async def gyro(self):
+        message = pack('<chh', b'g', 0, 0)
+        res = await self.command(message)
+        gyro_x, gyro_y = unpack('>hh', res)
+        return {'gyro_x': gyro_x, 'gyro_y': gyro_y}
+
     PARAMS = {'kp': b'K', 'ki': b'I', 'kd': b'D', 'ic': b'C', 'ms': b'M'}
 
     async def param(self, name, value=None):
