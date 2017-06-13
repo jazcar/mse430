@@ -20,11 +20,7 @@
 
 // Status variables for interrupts
 static volatile char* i2c_data = 0;
-static volatile struct {
-	unsigned dir :1;					// 1 for write, 0 for read
-	unsigned err :1;					// Flag to signal that error occurred
-	unsigned cnt :8;                    // Byte count
-} i2c_status = { 0 };
+static volatile unsigned i2c_count = 0;
 
 // Initialize hardware i2c
 int i2c_init() {
@@ -45,7 +41,7 @@ int i2c_init() {
 	UCB0I2CIE = UCNACKIE | UCSTPIE;		// Enable NACK and stop interrupts
 	// TODO: enable interrupts at general level
 
-	// Wait until complete (not great--might hang)
+	// Wait until complete (TODO: hangs sometimes)
 	do
 		LPM0;
 	while (UCB0STAT & UCBBUSY);
@@ -65,8 +61,7 @@ int i2c_write(unsigned address, signed reg, unsigned count, char* buffer) {
 
 	// Set state for interrupt
 	i2c_data = buffer;
-	i2c_status.dir = I2C_DIR_WRITE;
-	i2c_status.cnt = count;
+	i2c_count = count;
 
 	// Configure USCIB0
 	UCB0I2CSA = address;
@@ -88,8 +83,8 @@ int i2c_write(unsigned address, signed reg, unsigned count, char* buffer) {
 	// Reset USCI_B0 for next operation
 	UCB0CTL1 = UCSSEL_3 | UCSWRST;
 
-	// Return error if there was a NACK
-	return i2c_status.err ? (i2c_status.err = 0, -1) : 0;
+	// Error if bytes not written?
+	return -(signed) i2c_count;
 }
 
 // Read bytes from a device with optional register
@@ -105,8 +100,7 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 
 	// Set state for interrupt
 	i2c_data = buffer;
-	i2c_status.dir = I2C_DIR_READ;
-	i2c_status.cnt = count;
+	i2c_count = count;
 
 	UCB0I2CSA = address;
 
@@ -115,9 +109,20 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 		UCB0CTL1 = UCSSEL_3 | UCTR | UCTXSTT;
 		// TODO: Does there need to be a wait here?
 		UCB0TXBUF = reg;
-	} else {
-		UCB0CTL1 = UCSSEL_3 | UCTXSTT;
 	}
+
+	// TODO: wait for reg if applicable, and THEN...
+	// So this is a thing where I took out the relevant part of the TX
+	// interrupt, but then failed to replace its functionality. What needs
+	// to happen is for the TX interrupt flag to indicate that this byte
+	// (the register address) is being transmitted, and then reissue the
+	// start condition and join the previous no-register code below. I took
+	// out the status variable that had a direction flag... but something
+	// like that is needed. So.. yeah. Resume from there.
+
+	UCB0CTL1 = UCSSEL_3 | UCTXSTT;
+	// FIXME NOT DONE!!!!!!!!!
+
 
 	// Enable interrupts (also enable TX in for register case)
 	IE2 |= UCB0RXIE | (reg >= 0 ? UCB0TXIE : 0);
@@ -139,7 +144,7 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 	UCB0CTL1 = UCSSEL_3 | UCSWRST;
 
 	// Return error if there was a NACK
-	return i2c_status.err ? (i2c_status.err = 0, -1) : 0;
+	return -(signed) i2c_count;
 }
 
 // Interrupt service routines
@@ -147,28 +152,27 @@ inline void USCI_B0_I2C_STATUS_ISR() {
 	if (UCB0STAT & UCNACKIFG) {			// If NACK detected
 		UCB0CTL1 |= UCTXSTP;			// Send stop condition
 		UCB0STAT &= ~UCNACKIFG;			// Lower interrupt flag
-		i2c_status.err = 1;				// Set error flag
-		IE2 &= ~UCB0TXIE;				// Disable interrupts (TODO: more)
+		IE2 &= ~UCB0TXIE;				// Disable interrupts? (TODO: more?)
 	}
 }
 
 inline void USCI_B0_I2C_TX_RX_ISR() {
-	if (IFG2 & UCB0TXIFG) {					// Begin TX interrupt service.
-		if (i2c_status.dir) {				// If normal write operation,
-			if (i2c_status.cnt) {			// and if data remains,
-				--i2c_status.cnt;			// decrement the byte counter
-				UCB0TXBUF = *i2c_data++;	// and send the data.
-			} else {						// If no data remains,
-				UCB0CTL1 |= UCTXSTP;		// transmit the stop condition, and
-				IE2 &= ~UCB0TXIE;			// disable the TX interrupt to end.
-			}
-		} else {							// Writing in read mode, register
-			UCB0CTL1 = UCSSEL_3 | UCTXSTT;	// sent. Repeat start, clear UCTR.
-		}
-	} else if (IFG2 & UCB0RXIFG) {			// Begin RX interrupt service.
-		*i2c_data++ = UCB0RXBUF;			// Copy in the data.
-		if (--i2c_status.cnt == 1) {		// If one byte left, signal stop
-			UCB0CTL1 |= UCTXSTP;
-		}
-	}
+	if (IFG2 & UCB0TXIFG) {				// Begin TX interrupt service.
+		if (i2c_count) {				// If data remains,
+			--i2c_count;				// decrement the byte counter
+			UCB0TXBUF = *i2c_data++;	// and send the data.
+		} else {						// If no data remains,
+			UCB0CTL1 |= UCTXSTP;		// transmit the stop condition, and
+			IE2 &= ~UCB0TXIE;			// disable the TX interrupt to end.
+		}								// NB: Don't underflow i2c_count
+	} else if (IFG2 & UCB0RXIFG) {		// Begin RX interrupt service.
+		if (i2c_count) {				// If count is greater than 0,
+			--i2c_count;				// decrement count
+			*i2c_data++ = UCB0RXBUF;	// and copy data.
+		} else {						// If an extra byte is read, just do a
+			UCB0RXBUF;					// dummy read to clear the interrupt.
+		}								// Stop doesn't signal until the next
+		if (i2c_count <= 1)				// byte, so if one byte left (or less),
+			UCB0CTL1 |= UCTXSTP;		// stop. An extra byte will come for
+	}									// one-byte reads, but we ignore it.
 }
