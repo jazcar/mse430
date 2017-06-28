@@ -101,7 +101,7 @@ __interrupt void WDT_ISR() {
 	motor_update_rates();
 	tick_flag = 1;
 	ticks++;
-    __bic_SR_register_on_exit(LPM0_bits);
+	__bic_SR_register_on_exit(LPM0_bits);
 }
 
 #pragma vector = USCIAB0RX_VECTOR

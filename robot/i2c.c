@@ -21,6 +21,21 @@
 // Status variables for interrupts
 static volatile char* i2c_data = 0;
 static volatile unsigned i2c_count = 0;
+static enum i2c_state_enum {
+	IDLE = 0, WRITE = 2, READ = 4, REG = 6, RESET = 8
+};
+static volatile enum i2c_state_enum i2c_state = RESET;
+
+int i2c_wait(int timeout) {
+	unsigned long timeout_ticks;
+	timeout_ticks = timeout > 0 ? ticks + timeout : 0;
+
+	do {
+		LPM0;
+		if (timeout_ticks && !--timeout_ticks)
+			break; //TODO: continue working here
+	} while (UCB0STAT & UCBBUSY);
+}
 
 // Initialize hardware i2c
 int i2c_init() {
@@ -48,6 +63,7 @@ int i2c_init() {
 
 	// Reset USCIB0 between uses
 	UCB0CTL1 |= UCSWRST;
+	i2c_state = IDLE;
 
 	return 0;
 }
@@ -56,12 +72,13 @@ int i2c_init() {
 int i2c_write(unsigned address, signed reg, unsigned count, char* buffer) {
 
 	// Error if i2c_write called and module not reset (shouldn't happen)
-	if (!UCB0CTL1 & UCSWRST)
+	if (i2c_state || !UCB0CTL1 & UCSWRST)
 		return -1;
 
 	// Set state for interrupt
 	i2c_data = buffer;
 	i2c_count = count;
+	i2c_state = WRITE;
 
 	// Configure USCIB0
 	UCB0I2CSA = address;
@@ -106,8 +123,10 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 
 	// Start, send register address if appropriate
 	if (reg >= 0) {
+		i2c_state = REG;
 		UCB0CTL1 = UCSSEL_3 | UCTR | UCTXSTT;
-		// TODO: Does there need to be a wait here?
+		while (!IFG2 & UCB0TXIFG)
+			;
 		UCB0TXBUF = reg;
 	}
 
@@ -121,12 +140,11 @@ int i2c_read(unsigned address, signed reg, unsigned count, char* buffer) {
 	// like that is needed. So.. yeah. Resume from there.
 
 	UCB0CTL1 = UCSSEL_3 | UCTXSTT;
+	UCB0I2CIE |= UCNACKIE | UCSTPIE;
 	// FIXME NOT DONE!!!!!!!!!
 
-
 	// Enable interrupts (also enable TX in for register case)
-	IE2 |= UCB0RXIE | (reg >= 0 ? UCB0TXIE : 0);
-	UCB0I2CIE |= UCNACKIE | UCSTPIE;
+	IE2 |= UCB0RXIE;
 
 	// If only one byte desired, we have to poll UCTXSTT until address is done
 	if (count == 1) {
@@ -157,6 +175,7 @@ inline void USCI_B0_I2C_STATUS_ISR() {
 }
 
 inline void USCI_B0_I2C_TX_RX_ISR() {
+
 	if (IFG2 & UCB0TXIFG) {				// Begin TX interrupt service.
 		if (i2c_count) {				// If data remains,
 			--i2c_count;				// decrement the byte counter

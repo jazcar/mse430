@@ -38,7 +38,8 @@ void command_event() {
 		motor_a_set_power(data.ints[0]);
 		motor_b_set_power(data.ints[1]);
 		controller_on = 0;
-	case 'p':							// Get power (fall-through)
+		/* no break */
+	case 'p':							// Get power
 		data.ints[0] = motor_a_power;
 		data.ints[1] = motor_b_power;
 		break;
@@ -47,7 +48,8 @@ void command_event() {
 		speed_a_set_target(data.ints[0]);
 		speed_b_set_target(data.ints[1]);
 		controller_on = 1;
-	case 's':							// Get speed values (fall-through)
+		/* no break */
+	case 's':							// Get speed values
 		data.ints[0] = motor_a_rate;
 		data.ints[1] = motor_b_rate;
 		break;
