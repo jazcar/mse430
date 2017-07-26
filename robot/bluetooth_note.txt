@@ -8,6 +8,7 @@ http://www.instructables.com/id/Modify-The-HC-05-Bluetooth-Module-Defaults-Using
 http://www.electronicaestudio.com/docs/istd016A.pdf
 http://dronehitech.com/en/change-baud-rate-bluetooth-module/
 https://developer.mbed.org/users/edodm85/notebook/HC-05-bluetooth/
+http://wiki.pinguino.cc/index.php/SPP_Bluetooth_Modules
 
 Pitfalls:
 * The HC-05 and HC-06 are the same when connecting/using them, but they are very different to configure (sorry, I should have stuck with one).
