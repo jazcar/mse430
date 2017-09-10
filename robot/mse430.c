@@ -25,7 +25,7 @@ void mse430_init() {
 	mse430_clock_init();
 	uart_init();
 	motor_init();
-	// pid_init();
+	speed_controller_init();
 	// accel_init();
 
 	__enable_interrupt();

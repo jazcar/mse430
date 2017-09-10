@@ -12,8 +12,6 @@
 #include "motor.h"
 #include "speed.h"
 
-extern long k_p, k_i, k_d, int_cap, max_speed;	// speed.c
-
 void command_event() {
 
 	// Data structure for received commands and set responses

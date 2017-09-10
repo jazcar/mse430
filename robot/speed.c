@@ -10,17 +10,30 @@
 #include "mse430.h"
 #include "motor.h"
 
-#define GLOBAL_IQ 10
-#include "IQmathLib.h"
+#define QBITS 10
+#define F2Q(x) ((long)(x << QBITS))  // Don't know why this won't compile...
+#define I2Q(x) (((long) (x)) << QBITS)
 
 volatile long speed_a_target = 0;
 volatile long speed_b_target = 0;
 
-long k_p = _IQ(12.0);
-long k_i = _IQ(0.5);
-long k_d = _IQ(0.0);
-long int_cap = 1000000000;
-long max_speed = 64;
+long k_p, k_i, k_d, int_cap, max_speed;
+
+// If we multiply a long by a fixed point, and want a long as a result, we
+// have to remove the fractional bits after the multiplication
+inline long Q_L_MUL_2_L(long a, long b) {
+	long long c;
+	c = a * b;
+	return (long) (c >> QBITS);
+}
+
+void speed_controller_init() {
+	k_p = I2Q(12);
+	k_i = I2Q(1) >> 1;  // 0.5, but the F2Q thing wasn't working
+	k_d = I2Q(0);
+	int_cap = 1000000000;
+	max_speed = 64;
+}
 
 void speed_controller_tick() {
 
@@ -46,14 +59,14 @@ void speed_controller_tick() {
 	    err_b_int = long_constrain(err_b_int, -int_cap, int_cap);
 	}
 
-	motor_a_set_power(
-	        _IQmpyI32int(k_p, speed_a_err) +
-	        _IQmpyI32int(k_i, err_a_int) +
-	        _IQmpyI32int(k_d, err_a_der) );
-	motor_b_set_power(
-	        _IQmpyI32int(k_p, speed_b_err) +
-	        _IQmpyI32int(k_i, err_b_int) +
-	        _IQmpyI32int(k_d, err_b_der) );
+	motor_a_set_power((int)
+			Q_L_MUL_2_L(k_p, speed_a_err) +
+			Q_L_MUL_2_L(k_i, err_a_int) +
+			Q_L_MUL_2_L(k_d, err_a_der) );
+	motor_b_set_power((int)
+			Q_L_MUL_2_L(k_p, speed_b_err) +
+			Q_L_MUL_2_L(k_i, err_b_int) +
+			Q_L_MUL_2_L(k_d, err_b_der) );
 }
 
 void speed_a_set_target(int val) {
