@@ -8,8 +8,7 @@ class Vision:
 
     def __init__(self, loop, robotid, cam=0, focus=0, **kwargs):
         self.loop = loop
-        self.robotid = (robotid if 'robot_tag' not in kwargs 
-                        else int(kwargs['robot_tag']))
+        self.robotid = int(kwargs['robot_tag'] or robotid)
         print(kwargs)
         self.running = False
 
