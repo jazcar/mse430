@@ -18,6 +18,7 @@ class Server():
             'speed': self.speed,
             'power': self.power,
             'param': self.param,
+            'battery': self.battery,
             'shutdown': self.shutdown,
             'help': self.help,
         }
@@ -137,6 +138,18 @@ class Server():
 
         """
         return await self.robot.param(name, value and float(value))
+
+    async def battery(self):
+        """battery -- Get the current battery voltage
+
+        If the battery gets too low, the robot might shut down when
+        trying to drive the motors too hard. I'm not sure yet what to
+        have as a threshold, but try to keep it above 5 V or so when
+        at rest. It will dip when moving, but theoretically it should
+        be stable until you hit about 3.7 V.
+
+        """
+        return await self.robot.battery()
 
     async def help(self, command=None):
         """help [command] -- Display all commands or show details of one"""

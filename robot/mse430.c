@@ -10,6 +10,8 @@
 #include "pins.h"
 #include "uart.h"
 #include "motor.h"
+#include "speed.h"
+#include "adc.h"
 
 // Public variables
 volatile char tick_flag = 0;
@@ -27,6 +29,7 @@ void mse430_init() {
     motor_init();
     speed_controller_init();
     // accel_init();
+    adc_init();
 
     __enable_interrupt();
 

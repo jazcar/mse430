@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "motor.h"
 #include "speed.h"
+#include "adc.h"
 
 void command_event() {
 
@@ -82,6 +83,11 @@ void command_event() {
         break;
     case 'm':                           // Get max_speed
         data.int32 = max_speed;
+        break;
+
+    case 'b':                           // Check battery
+        data.ints[0] = adc_sample();
+        data.ints[1] = 0;
         break;
 
     default:                            // Bad Command
