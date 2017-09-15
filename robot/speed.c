@@ -23,7 +23,7 @@ long k_p, k_i, k_d, int_cap, max_speed;
 // have to remove the fractional bits after the multiplication
 inline long Q_L_MUL_2_L(long a, long b) {
 	long long c;
-	c = a * b;
+	c = (long long)(long)a * (long long)(long)b;    // Multiplication in C...
 	return (long) (c >> QBITS);
 }
 
