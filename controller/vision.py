@@ -7,7 +7,9 @@ class Vision:
 
     def __init__(self, loop, robotid, cam=0, focus=0, **kwargs):
         self.loop = loop
-        self.robotid = robotid
+        self.robotid = (robotid if 'robot_tag' not in kwargs 
+                        else int(kwargs['robot_tag']))
+        print(kwargs)
         self.running = False
 
         self.cap = cv2.VideoCapture(int(cam) if cam.isnumeric() else cam)

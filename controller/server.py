@@ -218,6 +218,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MSE430 robot server '
                                      'for CS 470')
     parser.add_argument('robot', help='Name or number of the robot to control')
+    parser.add_argument('--robot-tag', help='Alternative marker ID on robot')
     parser.add_argument('--port', type=int)
     parser.add_argument('--cam', default='0', help='Path or number of camera')
     parser.add_argument('--focus', default='0.0', help='Desired behavior '
