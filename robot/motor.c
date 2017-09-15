@@ -164,7 +164,7 @@ __interrupt void port1_isr() {
         P1IES ^= MOTOR_A_HALL_B;
         P1IFG &= ~MOTOR_A_HALL_B;
     }
-    quadrature_a = P1IN & ENCODER_A;	// Always read to not lose track
+    quadrature_a = P1IN & ENCODER_A;    // Always read to not lose track
 }
 
 // Motor B quadrature encoder
