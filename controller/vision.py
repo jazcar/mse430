@@ -1,14 +1,14 @@
 import asyncio
 import cv2
 import numpy as np
+import argparse
 
 
 class Vision:
 
     def __init__(self, loop, robotid, cam=0, focus=0, **kwargs):
         self.loop = loop
-        self.robotid = (robotid if 'robot_tag' not in kwargs 
-                        else int(kwargs['robot_tag']))
+        self.robotid = int(kwargs['robot_tag'] or robotid)
         self.running = False
 
         self.cap = cv2.VideoCapture(int(cam) if cam.isnumeric() else cam)
@@ -69,3 +69,11 @@ class Vision:
         facing /= np.linalg.norm(facing)
         return {'corners': corners.tolist(), 'orientation': facing.tolist(),
                 'center': center.tolist()}
+    
+    @staticmethod
+    def cli_arguments(parser):
+        parser.add_argument('--robot-tag', help='Alternative marker ID on robot')
+        parser.add_argument('--cam', default='0', help='Path or number of camera')
+        parser.add_argument('--focus', default='0.0', help='Desired behavior '
+                            'for camera focus, either \'auto\' or a number '
+                            'representing the desired value (defaults to 0)')

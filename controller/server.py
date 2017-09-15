@@ -1,5 +1,6 @@
 import asyncio
 import json
+import argparse
 from robot import Robot
 from vision import Vision
 
@@ -193,7 +194,7 @@ class ServerProtocol(asyncio.Protocol):
         print('Connection made')
         self.transport = transport
         
-    def connection_lost(self, exc):
+    def connectionn_lost(self, exc):
         print('Connection lost')
         self.transport = None  # Do I need to close it myself?
         
@@ -213,17 +214,19 @@ class ServerProtocol(asyncio.Protocol):
         return False
 
 
-if __name__ == '__main__':
-    import argparse
+def main():
     parser = argparse.ArgumentParser(description='MSE430 robot server '
                                      'for CS 470')
     parser.add_argument('robot', help='Name or number of the robot to control')
-    parser.add_argument('--robot-tag', help='Alternative marker ID on robot')
     parser.add_argument('--port', type=int)
-    parser.add_argument('--cam', default='0', help='Path or number of camera')
-    parser.add_argument('--focus', default='0.0', help='Desired behavior '
-                        'for camera focus, either \'auto\' or a number '
-                        'representing the desired value (defaults to 0)')
+
+    Vision.cli_arguments(parser)
+    Robot.cli_arguments(parser)
+
     args = parser.parse_args()
 
     Server(**vars(args)).run()
+
+
+if __name__ == '__main__':
+    main()
