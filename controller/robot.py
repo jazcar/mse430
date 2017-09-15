@@ -67,6 +67,17 @@ class Robot:
             value = fixed2float(value)
         return {name: value}
 
+    async def battery(self):
+        res = await self.command(b'b\0\0\0\0')
+        voltage, _ = unpack('<hh', res)
+        # The first 2.5 is for the voltage divider, which should be
+        # close to exact. The second 2.5 is for the internal reference
+        # used to measure the voltage on the msp430. It turns out that
+        # this value varies between 2.35 and 2.65, so some calibration
+        # might be needed for really accurate measurement. Still, it
+        # works well enough for now.
+        return {'voltage': voltage * 2.5 * 2.5 / 1023}
+    
 
 def float2fixed(x, bits=10):
     return round(x * 2**bits)
