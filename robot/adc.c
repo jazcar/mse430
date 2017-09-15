@@ -22,7 +22,19 @@ int adc_init() {
     // Analog input enable (not sure if this is needed since we have INCH)
     ADC10AE0 |= BATTERY_ADC;
 
-
+    // Turn ADC10 on (not sure when exactly to do this)
+    ADC10CTL0 |= ADC10ON;
 
     return 0;
+}
+
+int adc_sample() {
+
+    // Start conversion
+    ADC10CTL0 |= ENC | ADC10SC;
+
+    // Wait until complete (fixme)
+    while (!(ADC10CTL0 & ADC10IFG));
+
+    return ADC10MEM;
 }
