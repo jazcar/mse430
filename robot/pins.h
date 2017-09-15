@@ -12,7 +12,9 @@
 #define RED_LEDS        BIT0    // Drive low to light LEDs on top
 #define UART_RX         BIT1    // RX to BT TX
 #define UART_TX         BIT2    // TX to BT RX
-#define BUTTON_1        BIT3    // Button (not reset)
+#define BUTTON_1        BIT3    // Button (not reset button)
+#define INT             BIT3    // Interrupt from accelerometer, shared
+#define BATTERY_ADC     BIT3    // Also shared with button and interrupt
 #define MOTOR_A_HALL_B  BIT4    // Motor A encoder output B
 #define MOTOR_A_HALL_A  BIT5    // Motor A encoder output A
 #define I2C_SCL         BIT6    // UCB0SCL to Accelerometer SCL
