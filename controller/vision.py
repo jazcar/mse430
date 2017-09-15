@@ -1,6 +1,7 @@
 import asyncio
 import cv2
 import numpy as np
+import argparse
 
 
 class Vision:
@@ -70,3 +71,11 @@ class Vision:
         facing /= np.linalg.norm(facing)
         return {'corners': corners.tolist(), 'orientation': facing.tolist(),
                 'center': center.tolist()}
+    
+    @staticmethod
+    def cli_arguments(parser):
+        parser.add_argument('--robot-tag', help='Alternative marker ID on robot')
+        parser.add_argument('--cam', default='0', help='Path or number of camera')
+        parser.add_argument('--focus', default='0.0', help='Desired behavior '
+                            'for camera focus, either \'auto\' or a number '
+                            'representing the desired value (defaults to 0)')
