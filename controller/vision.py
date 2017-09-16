@@ -9,6 +9,8 @@ class Vision:
     def __init__(self, loop, robotid, cam=0, focus=0, **kwargs):
         self.loop = loop
         self.robotid = int(kwargs['robot_tag'] or robotid)
+        self.coords = kwargs['coords']
+
         self.running = False
 
         self.cap = cv2.VideoCapture(int(cam) if cam.isnumeric() else cam)
@@ -34,15 +36,15 @@ class Vision:
             self.cap.grab()
             self.objects = {'time': self.loop.time()}
             _, frame = self.cap.retrieve()
-            
-            corners, ids, params = cv2.aruco.detectMarkers(frame, self.markers)
+            self.imagesize = frame.shape
+            corners, ids, _ = cv2.aruco.detectMarkers(frame, self.markers)
 
             for n in range(len(corners)):
                 label = 'robot' if int(ids[n]) == self.robotid else int(ids[n])
                 self.objects[label] = self.process_aruco(corners[n][0])
             
             cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-            if 'robot' in self.objects:
+            if 'robot' in self.objects and self.coords == 'raw':
                 point1 = tuple(map(int, self.objects['robot']['center']))
                 point2 = (round(100 * self.objects['robot']['orientation'][0]
                                 + point1[0]),
@@ -61,8 +63,9 @@ class Vision:
         cv2.destroyAllWindows()
         self.cap.release()
 
-    @staticmethod
-    def process_aruco(corners):
+    def process_aruco(self, corners):
+        if self.coords == 'inverted':
+            corners = np.array([(x, self.imagesize[0]-y) for x,y in corners])
         center = np.mean(corners, 0)
         facing = np.mean(corners[:2], 0)
         facing -= center
@@ -72,8 +75,11 @@ class Vision:
     
     @staticmethod
     def cli_arguments(parser):
-        parser.add_argument('--robot-tag', help='Alternative marker ID on robot')
-        parser.add_argument('--cam', default='0', help='Path or number of camera')
+        parser.add_argument('--robot-tag', help='Alternative marker on robot')
+        parser.add_argument('--cam', default='0', help='Camera Path or number')
         parser.add_argument('--focus', default='0.0', help='Desired behavior '
                             'for camera focus, either \'auto\' or a number '
                             'representing the desired value (defaults to 0)')
+        parser.add_argument('--coords', help='Coordinate system to be used '
+                            'with camera', choices=['raw', 'inverted'], 
+                            default='raw')
