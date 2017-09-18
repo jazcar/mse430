@@ -26,7 +26,7 @@ class Vision:
 
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
-        self.objects = {}
+        self._objects = {}
 
     async def run(self):
         self.running = True
@@ -34,9 +34,10 @@ class Vision:
 
         while self.running:
             self.cap.grab()
-            self.objects = {'time': self.loop.time()}
+            self._objects = {'time': self.loop.time()}
             _, frame = self.cap.retrieve()
             self.imagesize = frame.shape
+            self._objects[''
             corners, ids, _ = cv2.aruco.detectMarkers(frame, self.markers)
 
             for n in range(len(corners)):
@@ -45,6 +46,8 @@ class Vision:
             
             cv2.aruco.drawDetectedMarkers(frame, corners, ids)
             if 'robot' in self.objects and self.coords == 'raw':
+                # Storing the raw and inverted coordinates for drawing
+                # was too much of a hassle
                 point1 = tuple(map(int, self.objects['robot']['center']))
                 point2 = (round(100 * self.objects['robot']['orientation'][0]
                                 + point1[0]),
@@ -81,5 +84,7 @@ class Vision:
                             'for camera focus, either \'auto\' or a number '
                             'representing the desired value (defaults to 0)')
         parser.add_argument('--coords', help='Coordinate system to be used '
-                            'with camera', choices=['raw', 'inverted'], 
-                            default='raw')
+                            'with camera. \'raw\' will give left-handed '
+                            '(graphics) coordinates where positive-y is down. '
+                            '\'inverted\' gives normal right-hand coordinates.', 
+                            choices=['raw', 'inverted'], default='inverted')
