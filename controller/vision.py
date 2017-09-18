@@ -36,7 +36,7 @@ class Vision:
             self.cap.grab()
             self.objects = {'time': self.loop.time()}
             _, frame = self.cap.retrieve()
-            self.objects['dimension'] = frame.shape
+            self.objects['dimension'] = frame.shape[:2]
             self.imagesize = frame.shape
 
             corners, ids, _ = cv2.aruco.detectMarkers(frame, self.markers)
