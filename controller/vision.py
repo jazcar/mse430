@@ -26,7 +26,7 @@ class Vision:
 
         self.markers = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_4X4_100)
-        self._objects = {}
+        self.objects = {}
 
     async def run(self):
         self.running = True
@@ -34,10 +34,11 @@ class Vision:
 
         while self.running:
             self.cap.grab()
-            self._objects = {'time': self.loop.time()}
+            self.objects = {'time': self.loop.time()}
             _, frame = self.cap.retrieve()
+            self.objects['dimension'] = frame.shape
             self.imagesize = frame.shape
-            self._objects[''
+
             corners, ids, _ = cv2.aruco.detectMarkers(frame, self.markers)
 
             for n in range(len(corners)):
